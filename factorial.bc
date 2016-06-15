@@ -1,0 +1,10 @@
+define fact(x) {
+  if (x < 0) {
+    print "you messed up";
+    halt;
+  }
+  if (x > 1) {
+    return (x * fact(x - 1));
+  }
+  return (1);
+}

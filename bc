@@ -1,0 +1,3 @@
+#!/bin/sh
+# Load bc with pre-defined functions
+/usr/bin/bc ./*.bc $@

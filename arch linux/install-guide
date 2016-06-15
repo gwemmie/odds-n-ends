@@ -1,0 +1,54 @@
+ 1. Set up and mount partitions (preferrably in /mnt)
+ 2. Copy over package cache
+ 3. Update packages & keys
+    pacman -Syy
+    pacman-key --init
+    pacman-key --populate archlinux antergos
+    pacman-key --refresh-keys
+    pacman -Syu
+ 4. Install base system
+    pacstrap -i /mnt base base-devel antergos-keyring
+ 5. Generate fstab
+    genfstab -U -p /mnt >> /mnt/etc/fstab
+ 6. Chroot in
+    arch-chroot /mnt /bin/bash
+ 7. Edit pacman.conf for multilib, color, ILoveCandy, and antergos:
+    [antergos]
+    SigLevel = PackageRequired
+    Usage = All
+    Server = http://mirrors.antergos.com/$repo/$arch
+ 8. Install yaourt
+    pacman-key --init
+    pacman-key --populate archlinux antergos
+    pacman-key --refresh-keys
+    pacman -Sy yaourt
+ 9. Set locale & date & hostname (replace localhost with name)
+    vim /etc/locale.gen
+    locale-gen
+    echo LANG=en_US.UTF-8 > /etc/locale.conf
+    ln -s /usr/share/zoneinfo/America/Los_Angeles /etc/localtime
+    hwclock --systohc --utc
+    OR for Windows dual-boot: hwclock --systohc --localtime
+    echo myhostname > /etc/hostname
+    vim /etc/hosts (replace "localhost" under <hostname>)
+10. Make initial RAMdisk environment
+    vim /etc/mkinitcpio.conf
+    mkinitcpio -p linux
+11. Set root password & make user account with password
+12. Set up sudo and wheel group
+13. Install MBR boot loader:
+        yaourt -S grub os-prober
+        grub-install --target=i386-pc --recheck /dev/sda
+        grub-mkconfig -o /boot/grub/grub.cfg
+    OR Install UEFI boot loader:
+        yaourt -S dosfstools
+        bootctl --path=/boot install
+        vim /boot/loader/entries/arch.conf
+            title          Arch Linux
+            linux          /vmlinuz-linux
+            initrd         /initramfs-linux.img
+            options        root=/dev/sdaX rw
+        vim /boot/loader/loader.conf
+            timeout X
+            default arch
+14. Reboot and login
