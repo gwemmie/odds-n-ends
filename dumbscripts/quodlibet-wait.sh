@@ -1,8 +1,7 @@
 #!/bin/bash
 # wait for internet connection to make decisions about quodlibet
 INFO=$HOME/Dropbox/Settings/Scripts
-ROUTER=$(sed -n 1p $INFO/ROUTER)
-#NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has (not important here)
+ROUTER=$(sed -n 1p $INFO/ROUTER) # hostname of main computer & router
 
 while ! nc -zw1 google.com 80; do sleep 1; done
 
@@ -14,12 +13,12 @@ then for ((i=0; i<$(sed -n 2p $INFO/ROUTER); i+=1)); do
       break
     fi
   done
-  else touch $HOME/.dumbscripts/quodlibet-found-router
+else touch $HOME/.dumbscripts/quodlibet-found-router
 fi
 
 sleep 1
 
 if [ -f $HOME/.dumbscripts/quodlibet-found-router ]
-  then rm $HOME/.dumbscripts/quodlibet-found-router
-  else $HOME/.dumbscripts/quodlibet.sh &
+then rm $HOME/.dumbscripts/quodlibet-found-router
+else $HOME/.dumbscripts/quodlibet.sh &
 fi

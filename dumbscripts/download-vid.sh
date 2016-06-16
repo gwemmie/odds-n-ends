@@ -16,6 +16,11 @@
 # using the playlist feature to download a whole season), and any extra
 # options to send straight to youtube-dl.
 
+# Another feature is youtube annotations: it uses youtube-ass
+# (https://github.com/nirbheek/youtube-ass) to get a .ass subtitle of
+# the annotations and, if there are any annotations, saves the file
+# with the same name as the video (otherwise deletes the file).
+
 # Bonus feature: type "dailyshow" as the URL argument to automatically
 # get the newest episode of the Daily Show with Trevor Noah. I wish I
 # could do that with other shows as easily.
@@ -52,8 +57,12 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   ID="$(echo $URL | cut -f 2 -d "=")"
   $HOME/.local/share/git/youtube-ass/youtube-ass.py "$ID"
   # check for empty annotations file
-  if [ "$(grep -A2 '\[Events\]' "$ID.ass" | sed -n 3p)" = "" ]; then rm "$ID.ass"
-  else mv "$ID.ass" "$DEST$(youtube-dl --get-title "$URL" | sed -n 1p).ass"
+  # It's referred to with that wildcard in the beginning because once,
+  # I somehow ended up with a file that had a hyphen in front of it (so
+  # it was named "-$ID.ass" instead of just "$ID.ass", and so it didn't
+  # get moved or deleted. I don't know why youtube-ass did that.
+  if [ "$(grep -A2 '\[Events\]' "$ID.ass" | sed -n 3p)" = "" ]; then rm "*$ID.ass"
+  else mv "*$ID.ass" "$DEST$(youtube-dl --get-title "$URL" | sed -n 1p).ass"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   OPT="--write-sub --sub-lang enUS --recode-video mkv --embed-subs"
