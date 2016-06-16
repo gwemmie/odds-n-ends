@@ -61,7 +61,7 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # I somehow ended up with a file that had a hyphen in front of it (so
   # it was named "-$ID.ass" instead of just "$ID.ass", and so it didn't
   # get moved or deleted. I don't know why youtube-ass did that.
-  if [ "$(grep -A2 '\[Events\]' "$ID.ass" | sed -n 3p)" = "" ]; then rm "*$ID.ass"
+  if [ "$(grep -A2 '\[Events\]' "*$ID.ass" | sed -n 3p)" = "" ]; then rm "*$ID.ass"
   else mv "*$ID.ass" "$DEST$(youtube-dl --get-title "$URL" | sed -n 1p).ass"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
