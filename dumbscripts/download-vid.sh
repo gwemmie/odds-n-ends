@@ -40,7 +40,7 @@
 # The CW
 
 ROUTER="$(sudo $HOME/.dumbscripts/mac-address.sh $(ip route show match 0/0 | awk '{print $3}'))"
-LOWBAND="00:0D:93:21:9D:F4"
+LOWBAND=( "00:0D:93:21:9D:F4" "14:DD:A9:D7:67:14" )
 TERMINAL=/usr/bin/mate-terminal
 if [ "$1" = "--terminal" ]; then
   URL="$2"
@@ -61,8 +61,8 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # I somehow ended up with a file that had a hyphen in front of it (so
   # it was named "-$ID.ass" instead of just "$ID.ass", and so it didn't
   # get moved or deleted. I don't know why youtube-ass did that.
-  if [ "$(grep -A2 '\[Events\]' "*$ID.ass" | sed -n 3p)" = "" ]; then rm "*$ID.ass"
-  else mv "*$ID.ass" "$DEST$(youtube-dl --get-title "$URL" | sed -n 1p).ass"
+  if [ "$(grep -A2 '\[Events\]' *$ID.ass | sed -n 3p)" = "" ]; then rm *$ID.ass
+  else mv *$ID.ass "$DEST$(youtube-dl --get-title "$URL" | sed -n 1p).ass"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   OPT="--write-sub --sub-lang enUS --recode-video mkv --embed-subs"
@@ -71,7 +71,21 @@ elif [ "$URL" = "dailyshow" ]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "http://www.cc.com/shows/the-daily-show-with-trevor-noah/full-episodes")"
 fi
 
-if [ "$ROUTER" = "$LOWBAND" ]; then
+# Plagiaraized from http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
+function contains() {
+  local n=$#
+  local value=${!n}
+  for ((i=1;i < $#;i++)) {
+    if [ "${!i}" == "${value}" ]; then
+      echo "y"
+      return 0
+    fi
+  }
+  echo "n"
+  return 1
+}
+
+if [ $(contains "${LOWBAND[@]}" "$ROUTER") == "y" ]; then
   echo "Trying to download low quality..."
   if [[ "$URL" =~ "youtube.com" ]]; then
     OPT="-f 18"
