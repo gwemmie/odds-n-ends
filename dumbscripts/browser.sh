@@ -64,7 +64,7 @@ function open-link() {
   local CMD="\"$LINK\""
   local EXT=$(MEDIA-contains "$LINK")
   if [ "$EXT" = "" ]; then
-    $CMD="$BROWSER $CMD"
+    CMD="$BROWSER $CMD"
   else
     CMD="${MEDIA[$EXT]} $CMD"
   fi
