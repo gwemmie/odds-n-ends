@@ -12,6 +12,7 @@ while true; do
       dropbox-cli stop
       sleep 2
       dropbox-cli start
+      if [ "$(pidof franz)" ]; then killall franz ; sleep 2 ; /usr/bin/franz & fi
     fi
   fi
   sleep 5

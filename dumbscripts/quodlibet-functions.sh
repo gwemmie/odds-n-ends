@@ -25,6 +25,12 @@ function save-queue {
   echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "$(quodlibet --print-queue | sed 's|file://||g')")" > $HOME/Dropbox/Playlists/queue
   sleep 1
   cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
+  # do it all again because of a bug where quodlibet ocassionally spits
+  # out whatever its queue was when it first ran
+  sleep 10
+  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "$(quodlibet --print-queue | sed 's|file://||g')")" > $HOME/Dropbox/Playlists/queue
+  sleep 1
+  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
 }
 
 function check-queue {
