@@ -2,6 +2,8 @@
 
 function load-queue-startup {
   cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
+  # to fix a bug mentioned in quodlibet-monitor.sh
+  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-first-queue
   quodlibet --unqueue= &
   sleep 2
   echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $HOME/Dropbox/Playlists/queue)" > $HOME/.quodlibet/control &
@@ -11,31 +13,29 @@ function load-queue-startup {
 }
 
 function load-queue {
-  chmod -w $HOME/Dropbox/Playlists/queue
   cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
   quodlibet --unqueue= &
   sleep 2
   echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $HOME/Dropbox/Playlists/queue)" > $HOME/.quodlibet/control &
   quodlibet --play-file="$(sed -n 1p $HOME/Dropbox/Playlists/queue)" &
-  sleep 2
-  chmod 644 $HOME/Dropbox/Playlists/queue
 }
 
 function save-queue {
-  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "$(quodlibet --print-queue | sed 's|file://||g')")" > $HOME/Dropbox/Playlists/queue
-  sleep 1
-  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
-  # do it all again because of a bug where quodlibet ocassionally spits
-  # out whatever its queue was when it first ran
-  sleep 10
-  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "$(quodlibet --print-queue | sed 's|file://||g')")" > $HOME/Dropbox/Playlists/queue
-  sleep 1
-  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
+  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "$(quodlibet --print-queue | sed 's|file://||g')")"
 }
 
 function check-queue {
   if diff $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue >/dev/null ; then
-    save-queue
+    # to avoid bug where print-queue returns nothing, resulting in just
+    # the now-playing song being in the save-queue output
+    while [ "$(save-queue | wc -l)" = "1" ]; do
+      notify-send "might need to restart quodlibet"
+      sleep 3
+    done
+    # & bug where it spits out whatever its queue was when it first ran
+    while [ "$(save-queue)" = "$(cat $HOME/.dumbscripts/quodlibet-first-queue)" ]
+    do sleep 1; done
+    save-queue > $HOME/Dropbox/Playlists/queue
   else
     load-queue
   fi

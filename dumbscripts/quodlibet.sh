@@ -33,18 +33,7 @@ elif [ "$(pkill -0 -fc 'python2 /usr/bin/quodlibet')" = "1" ]; then
   pkill -f "dbus-monitor --profile interface='net.sacredchao.QuodLibet',member='SongStarted'"
   check-queue
   sleep 5
-  # The following witchery is taking place because dbus-monitor will,
-  # as soon as it's run, immediately puke out a random amount of lines
-  # that we do NOT want to act on (because they're garbage). By the time
-  # we're 10 seconds in, it will be done with that garbage. You may get
-  # error messages from quodlibet complaining that it couldn't modify
-  # the read-only file. Ignore them. This is the only way I could manage
-  # to bypass that initial garbage, but still save the queue as soon as
-  # the first song finishes playing.
-  chmod -w $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
   /home/jimi/.dumbscripts/quodlibet-monitor.sh &
-  sleep 10
-  chmod 644 $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
   exit
 fi
 
@@ -55,9 +44,6 @@ load-queue-startup
 sleep 5
 
 /home/jimi/.dumbscripts/quodlibet-quit.sh &
-chmod -w $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
 /home/jimi/.dumbscripts/quodlibet-monitor.sh &
-sleep 10
-chmod 644 $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
 
 exit
