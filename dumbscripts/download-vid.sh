@@ -121,5 +121,7 @@ eval "$CMD"
 
 if [ "$?" != 0 ]; then
   echo "Something went wrong"
-  read -n1 -r -p "Press any key to exit..."
+  if [ "$1" != "--terminal" ]
+  then read -n1 -r -p "Press any key to exit..."
+  fi
 fi

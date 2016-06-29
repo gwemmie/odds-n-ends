@@ -5,17 +5,17 @@ function load-queue-startup {
   # to fix a bug mentioned in quodlibet-monitor.sh
   cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-first-queue
   quodlibet --unqueue= &
-  sleep 2
+  wait $!
   echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $HOME/Dropbox/Playlists/queue)" > $HOME/.quodlibet/control &
   quodlibet --play-file="$(sed -n 1p $HOME/Dropbox/Playlists/queue)" &
-  sleep 0.28
+  wait $!
   quodlibet --stop &
 }
 
 function load-queue {
   cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
   quodlibet --unqueue= &
-  sleep 2
+  wait $!
   echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $HOME/Dropbox/Playlists/queue)" > $HOME/.quodlibet/control &
   quodlibet --play-file="$(sed -n 1p $HOME/Dropbox/Playlists/queue)" &
 }

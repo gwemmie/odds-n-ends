@@ -28,21 +28,19 @@ killall quodlibet-wait.sh & rm $HOME/.dumbscripts/quodlibet-found-router
 if [ ! $# -eq 0 ]; then
   quodlibet --run --play-file "$@" &
   exit
-elif [ "$(pkill -0 -fc 'python2 /usr/bin/quodlibet')" = "1" ]; then
+elif pgrep 'quodlibet' | grep -v $$; then
   killall quodlibet-monitor.sh &
   pkill -f "dbus-monitor --profile interface='net.sacredchao.QuodLibet',member='SongStarted'"
   check-queue
-  sleep 5
   /home/jimi/.dumbscripts/quodlibet-monitor.sh &
   exit
 fi
 
 quodlibet --run --hide-window &
 sleep 7
+# I don't get it! This line works if I do it manually in bash, but NOT in the script
+#while [[ "$(quodlibet --status)" =~ "not running" ]]; do sleep 1; done
 load-queue-startup
-
-sleep 5
-
 /home/jimi/.dumbscripts/quodlibet-quit.sh &
 /home/jimi/.dumbscripts/quodlibet-monitor.sh &
 
