@@ -36,11 +36,14 @@ elif pgrep 'quodlibet' | grep -v $$; then
   exit
 fi
 
-quodlibet --run --hide-window &
-sleep 7
-# I don't get it! This line works if I do it manually in bash, but NOT in the script
-#while [[ "$(quodlibet --status)" =~ "not running" ]]; do sleep 1; done
+/usr/bin/quodlibet --run --hide-window &
+while ! ([[ "$(quodlibet --status)" =~ "paused" ]] \
+      || [[ "$(quodlibet --status)" =~ "playing" ]])
+do sleep 1; done
+sleep 20 # needs extra time to actually load AFTER IT SAYS IT'S LOADED
 load-queue-startup
+# this keeps getting reset somehow
+sed -i 's/ascii = true/ascii = false/' $HOME/.quodlibet/config
 /home/jimi/.dumbscripts/quodlibet-quit.sh &
 /home/jimi/.dumbscripts/quodlibet-monitor.sh &
 
