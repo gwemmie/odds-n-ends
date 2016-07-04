@@ -102,7 +102,8 @@ elif [ "$1" = "resume" ]; then
     fi
   fi
   NEW="$(echo "$DIF2NUM-$DIF1NUM+$OLDNUM" | bc -l) $BYTE"
-  echo $NEW > $TRACKER
+  echo $NEW > "$TRACKER"
+  echo "$INTERFACE" >> "$TRACKER"
   echo "vnstat resumed with $DIF2 - $DIF1 + $OLD = $NEW ignored"
 else
   NEW="$(adjusted-value)"
