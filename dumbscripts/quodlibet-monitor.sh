@@ -5,6 +5,8 @@ NEWER_QUEUE="$(save-queue)"
 # monitor for song changes & save queue
 dbus-monitor --profile "interface='net.sacredchao.QuodLibet',member='SongStarted'" |
 while read -r line; do
+  # this keeps getting reset somehow
+  sed -i 's/ascii = true/ascii = false/' $HOME/.quodlibet/config
   # skip the whole thing if this particular queue has already been saved
   # & avoid saving an empty queue
   # & avoid bug where print-queue returns nothing, resulting in just
@@ -20,6 +22,7 @@ while read -r line; do
   || [ "$(save-queue)" = "$NEWER_QUEUE" ] \
   || [ "$(save-queue)" = "$(cat $HOME/Dropbox/Playlists/queue)" ]; then
     #notify-send "quodlibet queue did not save"
+    continue
   else
     notify-send "quodlibet queue saved"
     save-queue > $HOME/Dropbox/Playlists/queue
