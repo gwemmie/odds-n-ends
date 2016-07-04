@@ -3,6 +3,7 @@
 # I made this because vnstat --enable/--disable were too unreliable
 # It's set to go month-by-month, resetting on day 1 of a month. You can
 # change that by modifying or deleting the first if block.
+INTERFACE=$(ip route ls | grep 'default via' | head -1 | awk '{ print $5}')
 TRACKER="$HOME/.dumbscripts/vnstat" # the file that keeps track
 
 # gets the adjusted value of vnstat's current count
@@ -28,13 +29,28 @@ function adjusted-value {
 # clear file if it's a new month
 if ! [ -f "$TRACKER" ] \
 || [ "$(stat -c %y $TRACKER | sed "s/$(date +%Y)-\([0-9][0-9]\)-.*/\1/")" != "$(date +%m)" ]
-then echo "0 GiB" > $TRACKER
+then
+  echo "0 GiB" > "$TRACKER"
+  echo "$INTERFACE" >> "$TRACKER"
+fi
+
+# check interface match
+if [ "$(sed -n 2p "$TRACKER")" != "$INTERFACE" ]; then
+  echo -n "WARNING: interface mismatch: "
+  echo "this count is on $(sed -n 2p "$TRACKER") but you are using $INTERFACE"
+  read -p "Clear count and replace with new interface? [Y/N] " ANS
+    case $ANS in
+      [yY]* ) echo "0 GiB" > "$TRACKER"
+        echo "$INTERFACE" >> "$TRACKER"
+        break;;
+      [nN]* ) exit;;
+    esac
 fi
 
 # pause, resume, or show vnstat with adjusted value
 if [ "$1" = "pause" ]; then
   if grep -Fq "paused at" "$TRACKER"; then
-    echo "vnstat already $(sed -n 2p "$TRACKER")"
+    echo "vnstat already $(sed -n 3p "$TRACKER")"
     exit
   fi
   PAUSE="$(adjusted-value)"
@@ -48,7 +64,7 @@ if [ "$1" = "pause" ]; then
   fi
 elif [ "$1" = "resume" ]; then
   OLD="$(sed -n 1p "$TRACKER")"
-  DIF1="$(sed -n 2p "$TRACKER" | sed 's/paused at //')"
+  DIF1="$(sed -n 3p "$TRACKER" | sed 's/paused at //')"
   DIF2="$(adjusted-value)"
   if [[ "$DIF2" =~ "error" ]]; then
     echo "$DIF2"
@@ -95,6 +111,8 @@ else
     echo "error: byte type mismatch: subtract $(sed -n 1p "$TRACKER")"
   else
     NEW="$(echo $NEW | sed 's/\s\+[A-Za-z]iB//')"
-    /usr/bin/vnstat | sed "s|\($(date +%b).*/.*/\s\+\)[0-9]*\.*[0-9]*\(\s\+[A-Za-z]iB\s\+/.*\)|\1$NEW\2|"
+    /usr/bin/vnstat | grep -B99 "$INTERFACE" | head -n -1
+    /usr/bin/vnstat | grep -A4 "$INTERFACE" | sed "s|\($(date +%b).*/.*/\s\+\)[0-9]*\.*[0-9]*\(\s\+[A-Za-z]iB\s\+/.*\)|\1$NEW\2|"
+    /usr/bin/vnstat | grep -A99 "$INTERFACE" | tail -n +6
   fi
 fi
