@@ -3,8 +3,11 @@
 # I made this because vnstat --enable/--disable were too unreliable
 # It's set to go month-by-month, resetting on day 1 of a month. You can
 # change that by modifying or deleting the first if block.
-INTERFACE=$(ip route ls | grep 'default via' | head -1 | awk '{ print $5}')
-TRACKER="$HOME/.dumbscripts/vnstat" # the file that keeps track
+
+if [ $# -eq 0 ] || [ "$1" = "pause" ] || [ "$1" = "resume" ]; then
+  INTERFACE=$(ip route ls | grep 'default via' | head -1 | awk '{ print $5}')
+  TRACKER="$HOME/.dumbscripts/vnstat" # the file that keeps track
+fi
 
 # gets the adjusted value of vnstat's current count
 function adjusted-value {
@@ -27,15 +30,17 @@ function adjusted-value {
 }
 
 # clear file if it's a new month
-if ! [ -f "$TRACKER" ] \
-|| [ "$(stat -c %y $TRACKER | sed "s/$(date +%Y)-\([0-9][0-9]\)-.*/\1/")" != "$(date +%m)" ]
+if ([ $# -eq 0 ] || [ "$1" = "pause" ] || [ "$1" = "resume" ]) \
+&& (! [ -f "$TRACKER" ] \
+|| [ "$(stat -c %y $TRACKER | sed "s/$(date +%Y)-\([0-9][0-9]\)-.*/\1/")" != "$(date +%m)" ])
 then
   echo "0 GiB" > "$TRACKER"
   echo "$INTERFACE" >> "$TRACKER"
 fi
 
 # check interface match
-if [ "$(sed -n 2p "$TRACKER")" != "$INTERFACE" ]; then
+if ([ $# -eq 0 ] || [ "$1" = "pause" ] || [ "$1" = "resume" ]) \
+&& [ "$(sed -n 2p "$TRACKER")" != "$INTERFACE" ]; then
   echo -n "WARNING: interface mismatch: "
   echo "this count is on $(sed -n 2p "$TRACKER") but you are using $INTERFACE"
   read -p "Clear count and replace with new interface? [Y/N] " ANS
@@ -105,7 +110,7 @@ elif [ "$1" = "resume" ]; then
   echo $NEW > "$TRACKER"
   echo "$INTERFACE" >> "$TRACKER"
   echo "vnstat resumed with $DIF2 - $DIF1 + $OLD = $NEW ignored"
-else
+elif [ $# -eq 0 ]; then
   NEW="$(adjusted-value)"
   if [[ "$NEW" =~ "error" ]]; then
     /usr/bin/vnstat
@@ -116,4 +121,5 @@ else
     /usr/bin/vnstat | grep -A4 "$INTERFACE" | sed "s|\($(date +%b).*/.*/\s\+\)[0-9]*\.*[0-9]*\(\s\+[A-Za-z]iB\s\+/.*\)|\1$NEW\2|"
     /usr/bin/vnstat | grep -A99 "$INTERFACE" | tail -n +6
   fi
+else /usr/bin/vnstat $@
 fi

@@ -36,6 +36,7 @@ function check-queue {
     || [ "$(save-queue)" = "$(cat $HOME/.dumbscripts/quodlibet-first-queue)" ] \
     || [ "$(save-queue)" = "$(cat $HOME/Dropbox/Playlists/queue)" ]; then
       #notify-send "quodlibet queue did not save"
+      return
     else
       notify-send "quodlibet queue saved"
       save-queue > $HOME/Dropbox/Playlists/queue

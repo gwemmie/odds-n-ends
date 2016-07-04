@@ -47,7 +47,7 @@ ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # hostname of main comp
 NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 OPS="-i $HOME/.ssh/id_rsa_Death-Tower -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://l.facebook.com/l.php?u=||' | sed 's|http.*://www.google.com/url?q=||' | sed 's|http.*://steamcommunity.com/linkfilter/?url=||')"
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
 RETURN=.mydefaults/browser-return
 OPENED=.mydefaults/browser-opened
 LOCKTIME=5 # seconds to wait before being willing to open the same link
@@ -66,6 +66,10 @@ declare -A MEDIA=([".mp3"]=$AUDIO [".m4a"]=$AUDIO [".ogg"]=$AUDIO \
 function MEDIA-contains() {
   for i in "${!MEDIA[@]}"; do
     if echo "$1" | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1 | grep -qi "$i"; then
+      # account for those dang giffy's
+      if echo "$1" | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1 | grep -qi ".gifv"
+      then return 1
+      fi
       echo "$i"
       return 0
     fi
@@ -105,6 +109,7 @@ function open-link() {
   fi
   eval "$CMD" &
   echo "$LINK" > "$OPENED"
+  rm -f "$LOCK" || true
 }
 
 # have to only open one link at a time for the "Double-click proof" to
