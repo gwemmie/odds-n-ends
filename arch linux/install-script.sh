@@ -23,6 +23,7 @@ fi
 sudo chmod 777 /var/cache/pacman/pkg
 PKGDEST=/var/cache/pacman/pkg pacaur -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/list)
 sudo chmod 755 /var/cache/pacman/pkg
+sudo chown root:root /var/cache/pacman/pkg/*.tar.xz
 sudo pacman -D --asdeps $(<$BACKUP/pkg/$(hostname)/deps)
 
 set +x
