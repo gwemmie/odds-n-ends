@@ -1,7 +1,7 @@
 #!/bin/bash
 BACKUP=$HOME/Backup/Computers/Linux
 INFO=$HOME/Dropbox/Settings/Scripts
-ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # hostname of main computer & router
+ROUTER=$(sed -n 1p $INFO/ROUTER) # hostname of main computer & router
 set -e
 echo "MAKE SURE YOU'RE IN WHEEL GROUP AND CAN USE SUDO AND HAVE INTERNET"
 sleep 5
