@@ -34,10 +34,10 @@ if [ "$1" = "vm" ]; then
   echo 1 > /sys/bus/pci/rescan &
   sleep 2
   if [ -d "$GPU" ]; then
-    echo $(cat $GPU/vendor) $(cat $GPU/device) > /sys/bus/pci/drivers/vfio-pci/new_id &
+    echo "$(<$GPU/vendor)" "$(<$GPU/device)" > /sys/bus/pci/drivers/vfio-pci/new_id &
   fi
   if [ -d "$AUDIO" ]; then
-    echo $(cat $AUDIO/vendor) $(cat $AUDIO/device) > /sys/bus/pci/drivers/vfio-pci/new_id &
+    echo "$(<$AUDIO/vendor)" "$(<$AUDIO/device)" > /sys/bus/pci/drivers/vfio-pci/new_id &
   fi
 elif [ "$1" = "host" ]; then
   if [ -d "$GPU" ]; then
@@ -54,10 +54,10 @@ elif [ "$1" = "host" ]; then
   echo 1 > /sys/bus/pci/rescan &
   sleep 2
   if [ -d "$GPU" ]; then
-    echo $(cat $GPU/vendor) $(cat $GPU/device) > /sys/bus/pci/drivers/$DRIVER/new_id &
+    echo "$(<$GPU/vendor)" "$(<$GPU/device)" > /sys/bus/pci/drivers/$DRIVER/new_id &
   fi
   if [ -d "$AUDIO" ]; then
-    echo $(cat $AUDIO/vendor) $(cat $AUDIO/device) > /sys/bus/pci/drivers/snd_hda_intel/new_id &
+    echo "$(<$AUDIO/vendor)" "$(<$AUDIO/device)" > /sys/bus/pci/drivers/snd_hda_intel/new_id &
   fi
 else
   echo "Provide an option: host or vm (virtual machine)"

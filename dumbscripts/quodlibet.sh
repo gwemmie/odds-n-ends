@@ -22,8 +22,14 @@
 # just your laptop, all automatically. To use that feature, run the
 # quodlibet-wait.sh script to run quodlibet INSTEAD of this main one.
 
+# You may be wondering why I end quodlibet commands with & and wait $!
+# It's because of a bug where if I just ran the command without a &, the
+# script would get stuck. Forever. Even though the command exits fine
+# and pretty quickly. No idea. Something wrong with quodlibet in scripts
+
 source $HOME/.dumbscripts/quodlibet-functions.sh
-killall quodlibet-wait.sh & rm $HOME/.dumbscripts/quodlibet-found-router
+killall quodlibet-wait.sh 2>/dev/null || true
+rm $HOME/.dumbscripts/quodlibet-found-router 2>/dev/null || true
 
 if [ ! $# -eq 0 ]; then
   quodlibet --run --play-file "$@" &
@@ -32,7 +38,7 @@ elif pgrep 'quodlibet' | grep -v $$; then
   killall quodlibet-monitor.sh &
   pkill -f "dbus-monitor --profile interface='net.sacredchao.QuodLibet',member='SongStarted'"
   check-queue
-  /home/jimi/.dumbscripts/quodlibet-monitor.sh &
+  $HOME/.dumbscripts/quodlibet-monitor.sh &
   exit
 fi
 
@@ -41,10 +47,8 @@ while ! ([[ "$(quodlibet --status)" =~ "paused" ]] \
       || [[ "$(quodlibet --status)" =~ "playing" ]])
 do sleep 1; done
 sleep 20 # needs extra time to actually load AFTER IT SAYS IT'S LOADED
-load-queue-startup
-# this keeps getting reset somehow
-sed -i 's/ascii = true/ascii = false/' $HOME/.quodlibet/config
-/home/jimi/.dumbscripts/quodlibet-quit.sh &
-/home/jimi/.dumbscripts/quodlibet-monitor.sh &
+load-queue ; quodlibet --stop &
+$HOME/.dumbscripts/quodlibet-quit.sh &
+$HOME/.dumbscripts/quodlibet-monitor.sh &
 
 exit

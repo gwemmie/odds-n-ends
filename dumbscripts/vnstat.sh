@@ -69,6 +69,10 @@ if [ "$1" = "pause" ]; then
     echo "paused at $PAUSE" | tee -a "$TRACKER"
   fi
 elif [ "$1" = "resume" ]; then
+  if ! grep -Fq "paused at" "$TRACKER"; then
+    echo "vnstat already resumed"
+    exit
+  fi
   OLD="$(sed -n 1p "$TRACKER")"
   DIF1="$(sed -n 3p "$TRACKER" | sed 's/paused at //')"
   DIF2="$(adjusted-value)"

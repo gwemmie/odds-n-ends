@@ -43,9 +43,9 @@
 BROWSER=/usr/bin/firefox
 INFO=$HOME/Dropbox/Settings/Scripts
 ROUTERUSER=jimi # your username
-ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # hostname of main computer & router
+ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # IP of main computer & router
 NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
-OPS="-i $HOME/.ssh/id_rsa_Death-Tower -o StrictHostKeyChecking=no" # SSH options
+OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
 LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
 RETURN=.mydefaults/browser-return
@@ -84,7 +84,7 @@ function open-link() {
   rm -f "$LOCK" || true
   # if link has been opened within past 2 seconds, just stop
   if [ -f "$OPENED" ]; then
-    if [ "$LINK" = "$(cat "$OPENED")" ]; then
+    if [ "$LINK" = "$(<"$OPENED")" ]; then
       echo "$(expr $(stat -c %y $OPENED | sed "s/$(date +%Y-%m-%d\ %H:%M:)\([0-9][0-9]\).*/\1/") + 0 2>/dev/null)"
       echo "$(expr $(date +%S) - 2)"
       if [ "$(expr $(stat -c %y $OPENED | sed "s/$(date +%Y-%m-%d\ %H:%M:)\([0-9][0-9]\).*/\1/") + 0 2>/dev/null)" \
@@ -95,6 +95,7 @@ function open-link() {
     else rm "$OPENED" || true
     fi
   fi
+  echo "$LINK" > "$OPENED"
   # open link according to extension
   local CMD="\"$LINK\""
   local EXT=$(MEDIA-contains "$LINK")
@@ -105,16 +106,14 @@ function open-link() {
   fi
   if [ "$1" = "return" ]; then
     # open it in the computer that clicked because ROUTER is busy
-    CMD="/usr/bin/ssh $OPS $(sed -n 1p $INFO/$(cat $RETURN).info) DISPLAY=:0 $CMD"
+    CMD="/usr/bin/ssh $OPS $(sed -n 1p $INFO/$(<"$RETURN").info) DISPLAY=:0 $CMD"
   fi
   eval "$CMD" &
-  echo "$LINK" > "$OPENED"
-  rm -f "$LOCK" || true
 }
 
 # have to only open one link at a time for the "Double-click proof" to
 # actually work
-while [ -f "$LOCK" ] && kill -0 $(cat "$LOCK"); do sleep 0.2; done
+while [ -f "$LOCK" ] && kill -0 $(<"$LOCK"); do sleep 0.2; done
 echo $$ | tee "$LOCK"
 # Routing logic & actual execution
 if [ $(hostname) = "$(sed -n 1p $INFO/ROUTER)" ]; then
@@ -128,14 +127,14 @@ else
   echo $(hostname) > $HOME/$RETURN
   if nc -zw1 $ROUTER 22; then
     scp $OPS $RETURN $ROUTERUSER@$ROUTER:/home/$ROUTERUSER/.mydefaults
-    ssh $OPS $ROUTERUSER@$ROUTER $CMD
+    ssh $OPS $ROUTERUSER@$ROUTER "$CMD" &
   else
     touch $HOME/.mydefaults/browser-gotit
     for ((i=0; i<$NATS; i+=1))
     do
       if nc -zw1 10.42.$i.1 22; then
         scp $OPS $RETURN $ROUTERUSER@10.42.$i.1:/home/$ROUTERUSER/.mydefaults
-        ssh $OPS $ROUTERUSER@10.42.$i.1 $CMD
+        ssh $OPS $ROUTERUSER@10.42.$i.1 "$CMD" &
         rm $HOME/.mydefaults/browser-gotit || true
         break
       fi
@@ -147,3 +146,6 @@ else
   fi
   rm $HOME/$RETURN || true
 fi
+
+rm -f "$LOCK" || true
+rm -f "$RETURN" || true

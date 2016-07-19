@@ -1,47 +1,45 @@
 #!/bin/bash
-
-function load-queue-startup {
-  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
-  # to fix a bug mentioned in quodlibet-monitor.sh
-  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-first-queue
-  quodlibet --unqueue= &
-  wait $!
-  echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $HOME/Dropbox/Playlists/queue)" > $HOME/.quodlibet/control &
-  quodlibet --play-file="$(sed -n 1p $HOME/Dropbox/Playlists/queue)" &
-  wait $!
-  quodlibet --stop &
-}
+QUEUE_FILE=$HOME/Dropbox/Settings/Scripts/quodlibet-queue
+QUEUE_LOCAL=$HOME/.dumbscripts/quodlibet-local-queue
 
 function load-queue {
-  cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
+  cp $QUEUE_FILE $QUEUE_LOCAL
   quodlibet --unqueue= &
   wait $!
-  echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $HOME/Dropbox/Playlists/queue)" > $HOME/.quodlibet/control &
-  quodlibet --play-file="$(sed -n 1p $HOME/Dropbox/Playlists/queue)" &
+  echo -e "enqueue $(sed '1d;:a;N;$!ba;s|\n|\nenqueue |g' $QUEUE_FILE)" > $HOME/.quodlibet/control &
+  quodlibet --play-file="$(sed -n 1p $QUEUE_FILE)" &
+  wait $!
 }
 
 function save-queue {
-  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "$(quodlibet --print-queue | sed 's|file://||g')")"
+  # Had to break out xargs to support arbitrarily large queues.
+  # Also had to use that dumb -I{} option because otherwise python would
+  # ignore about 99% of the lines that --print-queue outputted.
+  # No, I don't know why.
+  # Also had to use -P 6 to make xargs not run ungodly slowly. Change
+  # the number if your system isn't as powerful.
+  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(quodlibet --print-queue | xargs -I{} -d '\n' python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "{}" | sed 's|file://||g')"
 }
 
 function check-queue {
-  if diff $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue >/dev/null ; then
-    # skip the whole thing if this particular queue has already been saved
-    # & avoid saving an empty queue
+  if diff $QUEUE_FILE $QUEUE_LOCAL >/dev/null ; then
+    # avoid saving an empty queue
     # & avoid bug where print-queue returns nothing, resulting in just
     # the now-playing song being in the save-queue output
-    # & bug where it spits out whatever its queue was when it first ran
+    # & skip if this particular queue has already been saved
     if [ "$(save-queue)" = ""] \
     || [ "$(save-queue | wc -l)" = "1" ] \
-    || [ "$(save-queue)" = "$(cat $HOME/.dumbscripts/quodlibet-first-queue)" ] \
-    || [ "$(save-queue)" = "$(cat $HOME/Dropbox/Playlists/queue)" ]; then
-      #notify-send "quodlibet queue did not save"
+    || [ "$(save-queue)" = "$(<$QUEUE_FILE)" ]; then
       return
     else
-      notify-send "quodlibet queue saved"
-      save-queue > $HOME/Dropbox/Playlists/queue
+      # prefer sponge from moreutils: less buggy writing a lot at once
+      if hash sponge 2>/dev/null; then
+        save-queue | sponge $QUEUE_FILE
+      else
+        save-queue > $QUEUE_FILE
+      fi
       sleep 1
-      cp $HOME/Dropbox/Playlists/queue $HOME/.dumbscripts/quodlibet-local-queue
+      cp $QUEUE_FILE $QUEUE_LOCAL
     fi
   else
     load-queue

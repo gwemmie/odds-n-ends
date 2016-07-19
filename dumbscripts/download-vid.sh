@@ -37,6 +37,7 @@
 # Crunchyroll
 # Vimeo
 # Comedy Central
+# TED Talks
 # The CW
 
 ROUTER="$(sudo $HOME/.dumbscripts/mac-address.sh $(ip route show match 0/0 | awk '{print $3}'))"
@@ -61,8 +62,12 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # I somehow ended up with a file that had a hyphen in front of it (so
   # it was named "-$ID.ass" instead of just "$ID.ass", and so it didn't
   # get moved or deleted. I don't know why youtube-ass did that.
-  if [ "$(grep -A2 '\[Events\]' *$ID.ass | sed -n 3p)" = "" ]; then rm *$ID.ass
-  else mv *$ID.ass "$DEST$(youtube-dl --get-title "$URL" | sed -n 1p).ass"
+  # The double-hyphen makes it treat the file as a filename no matter
+  # what. I had to do that because I've had to deal with files named
+  # "--$ID.ass", which were interpreted as arguments. Why not just put
+  # it in quotes? Because that made the wildcard stop being a wildcard.
+  if [ "$(grep -A2 '\[Events\]' -- *$ID.ass | sed -n 3p)" = "" ]; then rm -- *$ID.ass
+  else mv -- *$ID.ass "$DEST$ID.ass"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   OPT="--write-sub --sub-lang enUS --recode-video mkv --embed-subs"
@@ -85,7 +90,7 @@ function contains() {
   return 1
 }
 
-if [ $(contains "${LOWBAND[@]}" "$ROUTER") == "y" ]; then
+if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
   if [[ "$URL" =~ "youtube.com" ]]; then
     OPT="-f 18"
@@ -111,7 +116,15 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") == "y" ]; then
   else echo "Trying to download high quality..."
 fi
 
-CMD="/usr/bin/youtube-dl $OPT $EXOPT -o \"$DEST%(title)s.%(ext)s\" \"$URL\""
+CMD="/usr/bin/youtube-dl $OPT $EXOPT -o"
+
+if [[ "$URL" =~ "cc.com" ]]; then
+  CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""
+elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "cwseed.com" ]]; then
+  CMD="$CMD \"$DEST%(extractor)s - %(title)s $ID.%(ext)s\" \"$URL\""
+else
+  CMD="$CMD \"$DEST%(uploader_id)s - %(title)s $ID.%(ext)s\" \"$URL\""
+fi
 
 if [ "$1" != "--terminal" ]; then
   CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e '$(echo $CMD)'"
@@ -124,4 +137,8 @@ if [ "$?" != 0 ]; then
   if [ "$1" != "--terminal" ]
   then read -n1 -r -p "Press any key to exit..."
   fi
+fi
+
+if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]
+then mv "$DEST$ID.ass" "$(find $DEST -name "*$ID.mp4" | sed -n 1p | sed 's/\.mp4/\.ass/')"
 fi
