@@ -21,7 +21,7 @@ if ! hash iconv 2>/dev/null; then
   notify-send "extract-shift-jis.sh: error: iconv is required"
   ERROR="true"
 fi
-if [ "$ERROR" = "true"]; then exit 1; fi
+if [ "$ERROR" = "true" ]; then exit 1; fi
 
 for ARCHIVE in "$@"; do
   if ! [ -f "$ARCHIVE" ]; then
