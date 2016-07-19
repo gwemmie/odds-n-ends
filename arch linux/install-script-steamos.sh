@@ -21,9 +21,10 @@ sudo cp -n $BACKUP/pkg/$(hostname)/*.tar.xz /var/cache/pacman/pkg/
 sudo cp -n $BACKUP/pkg/$ROUTER/*.tar.xz /var/cache/pacman/pkg/
 sudo chmod 777 /var/cache/pacman/pkg
 PKGDEST=/var/cache/pacman/pkg pacaur -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/list)
+PKGDEST=/var/cache/pacman/pkg pacaur -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/deps)
+sudo pacman -D --asdeps $(<$BACKUP/pkg/$(hostname)/deps)
 sudo chmod 755 /var/cache/pacman/pkg
 sudo chown root:root /var/cache/pacman/pkg/*.tar.xz
-sudo pacman -D --asdeps $(<$BACKUP/pkg/$(hostname)/deps)
 
 set +x
 echo "SETTING UP SYSTEM..."
