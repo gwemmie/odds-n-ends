@@ -9,9 +9,9 @@ sleep 5
 echo "INSTALLING PACKAGES..."
 sleep 2
 set -x
-sudo cp $BACKUP/pkg/$ROUTER/*libgl*.tar.xz /var/cache/pacman/pkg/
+sudo cp $BACKUP/pkg/$(hostname)/*libgl*.tar.xz /var/cache/pacman/pkg/
 if [ "$(hostname)" != "$ROUTER" ]
-then sudo cp $BACKUP/pkg/$(hostname)/*libgl*.tar.xz /var/cache/pacman/pkg/
+then sudo cp $BACKUP/pkg/$ROUTER/*libgl*.tar.xz /var/cache/pacman/pkg/
 fi
 sudo pacman -Sy libgl lib32-libgl
 sudo pacman -Rs gcc gcc-libs
