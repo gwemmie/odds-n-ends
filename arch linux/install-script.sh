@@ -41,11 +41,10 @@ sudo systemctl enable NetworkManager.service
 sudo systemctl enable ntpdate.service
 sudo systemctl enable bluetooth
 sudo systemctl enable udisks.service
-systemctl --user enable btsync
 echo HandleLidSwitch=ignore | sudo tee -a /etc/systemd/logind.conf
 rm -rf $HOME/.adobe/Flash_Player/{NativeCache,AssetCache,APSPrivateData2}
 sudo cp $BACKUP/conf/alsa-base.conf /etc/modprobe.d/
-sudo mkdir /etc/openal
+sudo mkdir -p /etc/openal
 echo drivers=pulse,alsa | sudo tee -a /etc/openal/alsoft.conf
 echo frequency=48000 | sudo tee -a /etc/openal/alsoft.conf
 sudo cp $BACKUP/conf/snd_seq_midi.conf /etc/modules-load.d/
@@ -53,8 +52,6 @@ sudo cp $BACKUP/conf/uinput.conf /etc/modules-load.d/
 sudo cp $BACKUP/conf/51-gcadapter.rules /etc/udev/rules.d/
 sudo udevadm control --reload-rules
 sudo cp -R $HOME/.config /root/
-sudo cp $BACKUP/bin/version /usr/bin/version
-sudo cp $HOME/Backup/Consoles/Wii\ \&\ Gamecube/dsp_*.bin $HOME/.dolphin-emu/GC/
 sudo cp $HOME/Backup/Consoles/Wii\ \&\ Gamecube/dsp_*.bin /usr/share/dolphin-emu/sys/GC/
 sudo cp $BACKUP/conf/51-gcadapter.rules /etc/udev/rules.d/
 sudo ln -s /usr/lib/firefox /usr/lib/mozilla
@@ -93,11 +90,12 @@ then
   sudo cp -dR $BACKUP/qemu/* /etc/libvirt/qemu/
   sudo mkdir -p /etc/libvirt/hooks && sudo cp $BACKUP/bin/qemu /etc/libvirt/hooks/
   yaourt -S --asdeps --noconfirm rpmextract
+  DIR=$(pwd)
   cd /tmp
   rpmextract.sh $BACKUP/edk2.git-ovmf-x64-*.rpm
   sudo cp -a ./usr/share/* /usr/share/
   sudo rm -rf ./usr
-  cd
+  cd "$DIR"
   sudo ln -s $HOME/.card.sh /root/
 fi
 

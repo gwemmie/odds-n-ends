@@ -37,6 +37,9 @@ sudo systemctl enable xlogin@$USER.service
 sudo systemctl enable sshd.socket
 sudo systemctl enable x2goserver.service
 sudo sed -i 's/my $lines=`ss -lxu`;/my $lines=`ss -lx`;/' /usr/bin/x2golistdesktops
+sudo mkdir -p /etc/openal
+echo drivers=pulse,alsa | sudo tee -a /etc/openal/alsoft.conf
+echo frequency=48000 | sudo tee -a /etc/openal/alsoft.conf
 sudo cp -d $BACKUP/bin/local/* /usr/local/bin/
 sudo cp $BACKUP/conf/9p-virtio.conf /etc/modules-load.d/
 sudo cp $HOME/Backup/Consoles/Wii\ \&\ Gamecube/dsp_*.bin /usr/share/dolphin-emu/sys/GC/
