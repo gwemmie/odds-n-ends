@@ -48,10 +48,10 @@ NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
 LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
-RETURN=.mydefaults/browser-return
-OPENED=.mydefaults/browser-opened
+RETURN="$HOME/.mydefaults/browser-return"
+OPENED="$HOME/.mydefaults/browser-opened"
+LOCK="$HOME/.mydefaults/browser-lock"
 LOCKTIME=5 # seconds to wait before being willing to open the same link
-LOCK=.mydefaults/browser-lock
 AUDIO=/usr/bin/mplayer
 VIDEO=/usr/bin/smplayer
 IMAGE=/usr/bin/ristretto
@@ -122,29 +122,29 @@ if [ $(hostname) = "$(sed -n 1p $INFO/ROUTER)" ]; then
   else
     open-link return
   fi
-  rm $HOME/$RETURN || true
+  rm "$RETURN" || true
 else
-  echo $(hostname) > $HOME/$RETURN
+  FOUND_ROUTER="false"
+  echo $(hostname) > "$RETURN"
   if nc -zw1 $ROUTER 22; then
-    scp $OPS $RETURN $ROUTERUSER@$ROUTER:/home/$ROUTERUSER/.mydefaults
+    FOUND_ROUTER="true"
+    scp $OPS "$RETURN" $ROUTERUSER@$ROUTER:/home/$ROUTERUSER/.mydefaults
     ssh $OPS $ROUTERUSER@$ROUTER "$CMD" &
   else
-    touch $HOME/.mydefaults/browser-gotit
     for ((i=0; i<$NATS; i+=1))
     do
       if nc -zw1 10.42.$i.1 22; then
-        scp $OPS $RETURN $ROUTERUSER@10.42.$i.1:/home/$ROUTERUSER/.mydefaults
+        FOUND_ROUTER="true"
+        scp $OPS "$RETURN" $ROUTERUSER@10.42.$i.1:/home/$ROUTERUSER/.mydefaults
         ssh $OPS $ROUTERUSER@10.42.$i.1 "$CMD" &
-        rm $HOME/.mydefaults/browser-gotit || true
         break
       fi
     done
   fi
-  if [ -f $HOME/.mydefaults/browser-gotit ]; then
-    rm $HOME/.mydefaults/browser-gotit || true
+  if [ "$FOUND_ROUTER" = "false" ]; then
     open-link
   fi
-  rm $HOME/$RETURN || true
+  rm "$RETURN" || true
 fi
 
 rm -f "$LOCK" || true

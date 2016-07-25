@@ -123,7 +123,7 @@ if [[ "$URL" =~ "cc.com" ]]; then
 elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "cwseed.com" ]]; then
   CMD="$CMD \"$DEST%(extractor)s - %(title)s $ID.%(ext)s\" \"$URL\""
 else
-  CMD="$CMD \"$DEST%(uploader_id)s - %(title)s $ID.%(ext)s\" \"$URL\""
+  CMD="$CMD \"$DEST%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
 fi
 
 if [ "$1" != "--terminal" ]; then
