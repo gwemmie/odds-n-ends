@@ -12,19 +12,21 @@ sleep 5
 echo "INSTALLING PACKAGES..."
 sleep 2
 set -x
-sudo cp $BACKUP/pkg/$ROUTER/*libgl*.tar.xz /var/cache/pacman/pkg/
-sudo cp $BACKUP/pkg/$(hostname)/*libgl*.tar.xz /var/cache/pacman/pkg/
-sudo pacman -Sy libgl lib32-libgl
-sudo pacman -Rs gcc gcc-libs
-sudo pacman -U --noconfirm $BACKUP/pkg/$ROUTER/pacaur*.tar.xz
-sudo cp -n $BACKUP/pkg/$(hostname)/*.tar.xz /var/cache/pacman/pkg/
 sudo cp -n $BACKUP/pkg/$ROUTER/*.tar.xz /var/cache/pacman/pkg/
-sudo chmod 777 /var/cache/pacman/pkg
-PKGDEST=/var/cache/pacman/pkg pacaur -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/list)
-PKGDEST=/var/cache/pacman/pkg pacaur -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/deps)
-sudo pacman -D --asdeps $(<$BACKUP/pkg/$(hostname)/deps)
-sudo chmod 755 /var/cache/pacman/pkg
-sudo chown root:root /var/cache/pacman/pkg/*.tar.xz
+sudo cp -n $BACKUP/pkg/$(hostname)/*.tar.xz /var/cache/pacman/pkg/
+# start with packages that hate --noconfirm (because they're a choice)
+# for KDE/Plasma, add phonon-qt5-backend
+sudo pacman -Sy libgl lib32-libgl gcc-multilib gcc-libs-multilib ttf-font
+# do AUR packages first since yaourt won't check cache
+for i in $(<$BACKUP/pkg/$(hostname)/aur); do
+  FILE="$(ls /var/cache/pacman/pkg/$i* | grep -P "$i-([0-9]|r[0-9]|latest)")"
+  sudo pacman -U --noconfirm --needed $FILE
+done
+yaourt -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/aur)
+yaourt -S --noconfirm --noedit --needed $(<$BACKUP/pkg/$(hostname)/list)
+yaourt -D --asexplicit $(<$BACKUP/pkg/$(hostname)/list)
+yaourt -D --asexplicit $(<$BACKUP/pkg/$(hostname)/aur)
+yaourt -D --asdeps $(<$BACKUP/pkg/$(hostname)/deps)
 
 set +x
 echo "SETTING UP SYSTEM..."
