@@ -116,7 +116,9 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   else echo "Trying to download high quality..."
 fi
 
-CMD="/usr/bin/youtube-dl $OPT $EXOPT -o"
+# the LC_ALL thing is to fix a bug where it needs LC_ALL to encode the
+# filename properly
+CMD="env LC_ALL=$LANG /usr/bin/youtube-dl $OPT $EXOPT -o"
 
 if [[ "$URL" =~ "cc.com" ]]; then
   CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""

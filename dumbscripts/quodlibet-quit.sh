@@ -3,7 +3,8 @@
 
 notify-send "quodlibet script ready to exit"
 while true; do
-  if [ "$(pkill -0 -fc 'python2 /usr/bin/quodlibet')" = "0" ]; then
+  if [ "$(pkill -0 -fc 'python2 /usr/bin/quodlibet --run')" = "0" ]; then
+    killall quodlibet
     killall quodlibet-monitor.sh
     pkill -f "dbus-monitor --profile interface='net.sacredchao.QuodLibet',member='SongStarted'"
     notify-send "quodlibet has exit"
