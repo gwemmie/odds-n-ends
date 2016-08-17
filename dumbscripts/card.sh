@@ -10,15 +10,16 @@ AUDIO="/sys/bus/pci/devices/$APCI"
 DRIVER=amdgpu # can change to nouveau or ati or whatever
 MANAGER=lightdm # can change to gdm or whatever
 
-if xset q &>/dev/null; then
+if [ "$DRIVER" = "nvidia" ] && xset q &>/dev/null; then
   echo "Run me again, as root, after logout ;)"
   $HOME/.dumbscripts/logout.sh
   exit
 fi
 
-systemctl stop $MANAGER
-
-sleep 2
+if [ "$DRIVER" = "nvidia" ]; then
+  systemctl stop $MANAGER
+  sleep 2
+fi
 
 if [ "$1" = "vm" ]; then
   if [ -d "$GPU" ]; then
@@ -57,6 +58,7 @@ else
   exit
 fi
 
-sleep 3
-
-systemctl start $MANAGER
+if [ "$DRIVER" = "nvidia" ]; then
+  sleep 3
+  systemctl start $MANAGER
+fi
