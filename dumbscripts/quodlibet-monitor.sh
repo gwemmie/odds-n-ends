@@ -15,17 +15,17 @@ while read -r line; do
   # times when it first starts running
   if [ "$(save-queue)" = ""] \
   || [ "$(save-queue | wc -l)" = "1" ] \
-  || [ "$(save-queue)" = "$(<$QUEUE_FILE)" ] \
+  || [ "$(save-queue)" = "$(<$QUEUE_LOCAL)" ] \
   || [ "$(save-queue)" = "$FIRST_QUEUE" ]; then
     continue
   else
     # prefer sponge from moreutils: less buggy writing a lot at once
     if hash sponge 2>/dev/null; then
-      save-queue | sponge $QUEUE_FILE
+      save-queue | sponge $QUEUE_LOCAL
     else
-      save-queue > $QUEUE_FILE
+      save-queue > $QUEUE_LOCAL
     fi
     sleep 1
-    cp $QUEUE_FILE $QUEUE_LOCAL
+    cp $QUEUE_LOCAL $QUEUE_FILE
   fi
 done
