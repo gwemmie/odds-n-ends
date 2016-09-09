@@ -92,7 +92,7 @@ function contains() {
 
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
-  if [[ "$URL" =~ "youtube.com" ]]; then
+  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
     OPT="-f 18"
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f mp4-360-500K"
@@ -101,7 +101,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "vimeo.com" ]]; then
     OPT="-f http-360p"
   elif [[ "$URL" =~ "cc.com" ]]; then
-    OPT="-f http-1028"
+    OPT="-f http-1028/1028"
   elif [[ "$URL" =~ "ted.com" ]]; then
     OPT="-f rtmp-600k"
   elif [[ "$URL" =~ "cwseed.com" ]]; then
