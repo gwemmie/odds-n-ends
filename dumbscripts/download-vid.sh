@@ -31,17 +31,12 @@
 # That feature requires my mac-address.sh script and arping (from the
 # package iputils) to be automatic. Otherwise, you can modify the script
 # to just always download in 360p.
-# Supported sites for automatic 360p:
-# YouTube
-# Vessel (Channel Awesome)
-# Crunchyroll
-# Vimeo
-# Comedy Central
-# TED Talks
-# The CW
+# Supported sites for automatic 360p are in that if-statement.
+# Also can do automatic 720p with MEDBAND.
 
 ROUTER="$(sudo $HOME/.dumbscripts/mac-address.sh $(ip route show match 0/0 | awk '{print $3}'))"
 LOWBAND=( "00:0D:93:21:9D:F4" "14:DD:A9:D7:67:14" )
+MEDBAND=( "08:86:3B:B4:EB:D4" )
 TERMINAL=/usr/bin/mate-terminal
 if [ "$1" = "--terminal" ]; then
   URL="$2"
@@ -103,7 +98,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "cc.com" ]]; then
     OPT="-f http-1028/1028"
   elif [[ "$URL" =~ "ted.com" ]]; then
-    OPT="-f rtmp-600k"
+    OPT="-f http-1253/hls-1253/rtmp-600k"
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f 640"
   else
@@ -113,7 +108,30 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
        [nN]* ) exit;;
      esac
   fi
-  else echo "Trying to download high quality..."
+elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
+  echo "Trying to download medium quality..."
+  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
+    OPT="-f 22"
+  elif [[ "$URL" =~ "vessel.com" ]]; then
+    OPT="-f mp4-720-2400K"
+  elif [[ "$URL" =~ "crunchyroll.com" ]]; then
+    OPT="$OPT -f 720p"
+  elif [[ "$URL" =~ "vimeo.com" ]]; then
+    OPT="-f http-720p"
+  elif [[ "$URL" =~ "cc.com" ]]; then
+    OPT="-f http-3128/3128"
+  elif [[ "$URL" =~ "ted.com" ]]; then
+    OPT="-f http-3976/hls-3976/rtmp-1500k"
+  elif [[ "$URL" =~ "cwseed.com" ]]; then
+    OPT="-f 2100"
+  else
+    echo "WARNING: Unknown website. Defaulting to best quality."
+    read -p "Download anyway? [Y/N] " ANS
+     case $ANS in
+       [nN]* ) exit;;
+     esac
+  fi
+else echo "Trying to download high quality..."
 fi
 
 # the LC_ALL thing is to fix a bug where it needs LC_ALL to encode the
@@ -133,12 +151,14 @@ if [ "$1" != "--terminal" ]; then
 fi
 
 eval "$CMD"
+ERROR=$?
 
-if [ "$?" != 0 ]; then
+if [ "$ERROR" != 0 ]; then
   echo "Something went wrong"
   if [ "$1" != "--terminal" ]
   then read -n1 -r -p "Press any key to exit..."
   fi
+  return $ERROR
 fi
 
 if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]
