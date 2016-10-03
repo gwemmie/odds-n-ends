@@ -100,7 +100,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "ted.com" ]]; then
     OPT="-f http-1253/hls-1253/rtmp-600k"
   elif [[ "$URL" =~ "cwseed.com" ]]; then
-    OPT="-f 640"
+    OPT="-f hls-640/640"
   else
     echo "WARNING: Unknown website. Defaulting to best quality."
     read -p "Download anyway? [Y/N] " ANS
@@ -123,7 +123,7 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "ted.com" ]]; then
     OPT="-f http-3976/hls-3976/rtmp-1500k"
   elif [[ "$URL" =~ "cwseed.com" ]]; then
-    OPT="-f 2100"
+    OPT="-f hls-2100/2100"
   else
     echo "WARNING: Unknown website. Defaulting to best quality."
     read -p "Download anyway? [Y/N] " ANS
@@ -140,7 +140,8 @@ CMD="env LC_ALL=$LANG /usr/bin/youtube-dl $OPT $EXOPT -o"
 
 if [[ "$URL" =~ "cc.com" ]]; then
   CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""
-elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "cwseed.com" ]]; then
+elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
+  || [[ "$URL" =~ "cwseed.com" ]]; then
   CMD="$CMD \"$DEST%(extractor)s - %(title)s $ID.%(ext)s\" \"$URL\""
 else
   CMD="$CMD \"$DEST%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
@@ -158,7 +159,7 @@ if [ "$ERROR" != 0 ]; then
   if [ "$1" != "--terminal" ]
   then read -n1 -r -p "Press any key to exit..."
   fi
-  return $ERROR
+  exit $ERROR
 fi
 
 if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]
