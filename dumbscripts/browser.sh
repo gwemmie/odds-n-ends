@@ -24,6 +24,13 @@
 # WARNING: Feature #3 means there is usually a text file containing the
 # last link you opened from outside of a browser. In case you care about
 # privacy.
+# 4. Remote Usage Mode: This will do more things when I replace my phone
+# with a Pyra, but for now, it will automatically open video links with
+# video-dl (see my download-vid.sh script) on the main home computer
+# (coming soon)
+# 5. Coming soon: a switch, that you can make into a desktop shortcut,
+# that decides whether the computer will bother with trying to open
+# links on the main computer, or go with its own local browser.
 
 # NOTE: Unlike other dumbscripts, this one assumes it lives in
 # $HOME/.mydefaults instead of .dumbscripts, to be consistent with the
@@ -45,6 +52,8 @@ INFO=$HOME/Dropbox/Settings/Scripts
 ROUTERUSER=jimi # your username
 ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # IP of main computer & router
 NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
+COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
+HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
 LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
@@ -61,6 +70,11 @@ declare -A MEDIA=([".mp3"]=$AUDIO [".m4a"]=$AUDIO [".ogg"]=$AUDIO \
                   [".mkv"]=$VIDEO [".flv"]=$VIDEO [".avi"]=$VIDEO \
                   [".jpg"]=$IMAGE [".jpeg"]=$IMAGE [".png"]=$IMAGE \
                   [".gif"]=$IMAGE)
+
+# Check for remote use mode: "if computer is not home" (heh)
+#if [ $(hostname) != $(sed -n 1p $INFO/ROUTER) ] && [ $COMPUTER != $HOME ]
+#then something
+#fi
 
 # Check if string contains a defined media extension after its last /
 function MEDIA-contains() {
