@@ -40,7 +40,7 @@
 # files in a text editor while also opening an image file in your image
 # viewer. You had to pick one of those. Por qué no los dos?
 
-BROWSER=/usr/bin/firefox
+BROWSER=firefox
 INFO=$HOME/Dropbox/Settings/Scripts
 ROUTERUSER=jimi # your username
 ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # IP of main computer & router

@@ -24,6 +24,9 @@
 # Bonus feature: type "dailyshow" as the URL argument to automatically
 # get the newest episode of the Daily Show with Trevor Noah. I wish I
 # could do that with other shows as easily.
+# That hasn't been working lately, because Comedy Central changed their
+# site and doesn't update that redirect-to-newest-episode URL until at
+# least 24 hours after the episode is available to stream.
 
 # If you, like my brother, have a crippling monthly bandwidth limit, you
 # can put the MAC address of your router in $LOWBAND to automatically
@@ -92,7 +95,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f mp4-360-500K"
   elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f 360p"
+    OPT="$OPT -f hls-meta-0/360p"
   elif [[ "$URL" =~ "vimeo.com" ]]; then
     OPT="-f http-360p"
   elif [[ "$URL" =~ "cc.com" ]]; then
@@ -115,7 +118,7 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f mp4-720-2400K"
   elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f 720p"
+    OPT="$OPT -f hls-meta-2/720p/hls-meta-1/480p"
   elif [[ "$URL" =~ "vimeo.com" ]]; then
     OPT="-f http-720p"
   elif [[ "$URL" =~ "cc.com" ]]; then
