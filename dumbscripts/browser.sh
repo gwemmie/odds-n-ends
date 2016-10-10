@@ -53,7 +53,7 @@ ROUTERUSER=jimi # your username
 ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # IP of main computer & router
 NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
-HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
+AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
 LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
@@ -71,8 +71,8 @@ declare -A MEDIA=([".mp3"]=$AUDIO [".m4a"]=$AUDIO [".ogg"]=$AUDIO \
                   [".jpg"]=$IMAGE [".jpeg"]=$IMAGE [".png"]=$IMAGE \
                   [".gif"]=$IMAGE)
 
-# Check for remote use mode: "if computer is not home" (heh)
-#if [ $(hostname) != $(sed -n 1p $INFO/ROUTER) ] && [ $COMPUTER != $HOME ]
+# Check for remote use mode: "if computer is not at home" (heh)
+#if [ $(hostname) != $(sed -n 1p $INFO/ROUTER) ] && [ $COMPUTER != $AT_HOME ]
 #then something
 #fi
 
