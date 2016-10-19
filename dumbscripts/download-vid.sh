@@ -44,11 +44,11 @@ TERMINAL=/usr/bin/mate-terminal
 if [ "$1" = "--terminal" ]; then
   URL="$2"
   FOLDER="$3"
-  EXOPT="$4"
+  EXOPT="${@:4}"
 else
   URL="$1"
   FOLDER="$2"
-  EXOPT="$3"
+  EXOPT="${@:3}"
 fi
 DEST="$HOME/Downloads/$FOLDER"
 
@@ -139,7 +139,7 @@ fi
 
 # the LC_ALL thing is to fix a bug where it needs LC_ALL to encode the
 # filename properly
-CMD="env LC_ALL=$LANG /usr/bin/youtube-dl $OPT $EXOPT -o"
+CMD="env LC_ALL=$LANG /usr/bin/youtube-dl $OPT ${EXOPT[@]} -o"
 
 if [[ "$URL" =~ "cc.com" ]]; then
   CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""
