@@ -31,6 +31,9 @@
 # 5. Coming soon: a switch, that you can make into a desktop shortcut,
 # that decides whether the computer will bother with trying to open
 # links on the main computer, or go with its own local browser.
+# 6. Recognizes Google Hangouts links and opens them in a separate
+# browser. I added this so I can call someone from another computer and
+# get a Chrome window of the call on my main computer.
 
 # NOTE: Unlike other dumbscripts, this one assumes it lives in
 # $HOME/.mydefaults instead of .dumbscripts, to be consistent with the
@@ -48,6 +51,7 @@
 # viewer. You had to pick one of those. Por qué no los dos?
 
 BROWSER=firefox
+HANGOUTS="google-chrome-stable --app="
 INFO=$HOME/Dropbox/Settings/Scripts
 ROUTERUSER=jimi # your username
 ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # IP of main computer & router
@@ -110,11 +114,14 @@ function open-link() {
     fi
   fi
   echo "$LINK" > "$OPENED"
-  # open link according to extension
+  # open link according to what it is
   local CMD="\"$LINK\""
   local EXT=$(MEDIA-contains "$LINK")
   if [ "$EXT" = "" ]; then
-    CMD="$BROWSER $CMD"
+    if [[ "$LINK" =~ "https://hangouts.google.com/hangouts/" ]]
+    then CMD="$HANGOUTS$CMD"
+    else CMD="$BROWSER $CMD"
+    fi
   else
     CMD="${MEDIA[$EXT]} $CMD"
   fi

@@ -91,19 +91,19 @@ function contains() {
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
-    OPT="-f 18"
+    OPT="-f \"18/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
-    OPT="-f mp4-360-500K"
+    OPT="-f \"mp4-360-500K/best[height<=360]\""
   elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f hls-meta-0/360p"
+    OPT="$OPT -f \"hls-meta-0/360p/best[height<=360]\""
   elif [[ "$URL" =~ "vimeo.com" ]]; then
-    OPT="-f http-360p"
+    OPT="-f \"http-360p/best[height<=360]\""
   elif [[ "$URL" =~ "cc.com" ]]; then
-    OPT="-f http-1028/1028"
+    OPT="-f \"http-1028/1028/best[height<=360]\""
   elif [[ "$URL" =~ "ted.com" ]]; then
-    OPT="-f http-1253/hls-1253/rtmp-600k"
+    OPT="-f \"http-1253/hls-1253/rtmp-600k/best[height<=360]\""
   elif [[ "$URL" =~ "cwseed.com" ]]; then
-    OPT="-f hls-640/640"
+    OPT="-f \"hls-640/640/best[height<=360]\""
   else
     echo "WARNING: Unknown website. Defaulting to best quality."
     read -p "Download anyway? [Y/N] " ANS
@@ -114,19 +114,19 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
 elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download medium quality..."
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
-    OPT="-f 22"
+    OPT="-f \"22/best[height<=720]/18/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
-    OPT="-f mp4-720-2400K"
+    OPT="-f \"mp4-720-2400K/best[height<=720]/mp4-360-500K/best[height<=360]\""
   elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f hls-meta-2/720p/hls-meta-1/480p"
+    OPT="$OPT -f \"hls-meta-2/720p/best[height<=720]/hls-meta-1/480p/hls-meta-0/360p/best[height<=360]\""
   elif [[ "$URL" =~ "vimeo.com" ]]; then
-    OPT="-f http-720p"
+    OPT="-f \"http-720p/best[height<=720]/http-360p/best[height<=360]\""
   elif [[ "$URL" =~ "cc.com" ]]; then
-    OPT="-f http-3128/3128"
+    OPT="-f \"http-3128/3128/best[height<=720]/http-1028/1028/best[height<=360]\""
   elif [[ "$URL" =~ "ted.com" ]]; then
-    OPT="-f http-3976/hls-3976/rtmp-1500k"
+    OPT="-f \"http-3976/hls-3976/rtmp-1500k/best[height<=720]/http-1253/hls-1253/rtmp-600k/best[height<=360]\""
   elif [[ "$URL" =~ "cwseed.com" ]]; then
-    OPT="-f hls-2100/2100"
+    OPT="-f \"hls-2100/2100/best[height<=720]/hls-640/640/best[height<=360]\""
   else
     echo "WARNING: Unknown website. Defaulting to best quality."
     read -p "Download anyway? [Y/N] " ANS
