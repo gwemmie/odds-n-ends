@@ -105,11 +105,14 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f \"hls-640/640/best[height<=360]\""
   else
-    echo "WARNING: Unknown website. Defaulting to best quality."
-    read -p "Download anyway? [Y/N] " ANS
-     case $ANS in
-       [nN]* ) exit;;
-     esac
+    echo "WARNING: Unknown website. May not get desired quality."
+    OPT="-f \"best[height<=360]\""
+    # commented out because I was sick of not being able to leave a
+    # batch downloading unattended
+    #read -p "Download anyway? [Y/N] " ANS
+    # case $ANS in
+    #   [nN]* ) exit;;
+    # esac
   fi
 elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download medium quality..."
@@ -128,11 +131,14 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f \"hls-2100/2100/best[height<=720]/hls-640/640/best[height<=360]\""
   else
-    echo "WARNING: Unknown website. Defaulting to best quality."
-    read -p "Download anyway? [Y/N] " ANS
-     case $ANS in
-       [nN]* ) exit;;
-     esac
+    echo "WARNING: Unknown website. May not get desired quality."
+    OPT="-f \"best[height<=720]\""
+    # commented out because I was sick of not being able to leave a
+    # batch downloading unattended
+    #read -p "Download anyway? [Y/N] " ANS
+    # case $ANS in
+    #   [nN]* ) exit;;
+    # esac
   fi
 else echo "Trying to download high quality..."
 fi
