@@ -28,6 +28,10 @@
 # site and doesn't update that redirect-to-newest-episode URL until at
 # least 24 hours after the episode is available to stream.
 
+# Now has integration with browser.sh to automatically open video links
+# that are compatible with youtube-dl according to YOUR choice at the
+# time! Download, browser, or video player.
+
 # If you, like my brother, have a crippling monthly bandwidth limit, you
 # can put the MAC address of your router in $LOWBAND to automatically
 # download videos in 360p when you're home, and go for HD otherwise.
@@ -41,6 +45,8 @@ ROUTER="$(sudo $HOME/.dumbscripts/mac-address.sh $(ip route show match 0/0 | awk
 LOWBAND=( "00:0D:93:21:9D:F4" "14:DD:A9:D7:67:14" )
 MEDBAND=( "08:86:3B:B4:EB:D4" )
 TERMINAL=/usr/bin/mate-terminal
+BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER=//')
+PLAYER=/usr/bin/smplayer
 if [ "$1" = "--terminal" ]; then
   URL="$2"
   FOLDER="$3"
@@ -48,7 +54,10 @@ if [ "$1" = "--terminal" ]; then
 else
   URL="$1"
   FOLDER="$2"
-  EXOPT="${@:3}"
+  if [ "$3" = "--ask" ]
+  then EXOPT="${@:4}"
+  else EXOPT="${@:3}"
+  fi
 fi
 DEST="$HOME/Downloads/$FOLDER"
 
@@ -157,13 +166,25 @@ else
 fi
 
 if [ "$1" != "--terminal" ]; then
-  CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e '$(echo $CMD)'"
+  if [ "$3" = "--ask" ]; then
+    echo "#!/bin/bash" >/tmp/download-vid-ask.sh
+    chmod +x /tmp/download-vid-ask.sh
+    echo 'read -p "Download, browser, or player? [D/B/P] " ANS' | tee -a /tmp/download-vid-ask.sh
+    echo 'case $ANS in' | tee -a /tmp/download-vid-ask.sh
+    echo '  [dD]* )' "$CMD;;" | tee -a /tmp/download-vid-ask.sh
+    echo '  [bB]* )' "nohup $BROWSER \"$URL\" >/dev/null;;" | tee -a /tmp/download-vid-ask.sh
+    echo '  [pP]* )' "nohup $PLAYER \"$URL\" >/dev/null;;" | tee -a /tmp/download-vid-ask.sh
+    echo 'esac' | tee -a /tmp/download-vid-ask.sh
+    echo 'rm /tmp/download-vid-ask.sh' | tee -a /tmp/download-vid-ask.sh
+    CMD=/tmp/download-vid-ask.sh
+  fi
+  CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e \"bash -c '$(echo $CMD)'\""
 fi
 
 eval "$CMD"
 ERROR=$?
 
-if [ "$ERROR" != 0 ]; then
+if [ "$ERROR" != 0 ] && [ "$ERROR" != 255 ]; then
   echo "Something went wrong"
   if [ "$1" != "--terminal" ]
   then read -n1 -r -p "Press any key to exit..."

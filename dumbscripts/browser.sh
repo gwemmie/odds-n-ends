@@ -35,6 +35,10 @@
 # browser. I added this so I can call someone from another computer and
 # get a Chrome window of the call on my main computer.
 
+# Now has integration with download-vid.sh to automatically open video
+# links that are compatible with youtube-dl according to YOUR choice at
+# the time! Download, browser, or video player.
+
 # NOTE: Unlike other dumbscripts, this one assumes it lives in
 # $HOME/.mydefaults instead of .dumbscripts, to be consistent with the
 # freedesktop standards of your default browser being in .mydefaults. I
@@ -51,6 +55,8 @@
 # viewer. You had to pick one of those. Por qué no los dos?
 
 BROWSER=firefox
+VIDEO1=$HOME/.dumbscripts/download-vid.sh
+VIDEO2="./ --ask"
 HANGOUTS="google-chrome-stable --app="
 INFO=$HOME/Dropbox/Settings/Scripts
 ROUTERUSER=jimi # your username
@@ -60,7 +66,7 @@ COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
 RETURN="$HOME/.mydefaults/browser-return"
 OPENED="$HOME/.mydefaults/browser-opened"
 LOCK="$HOME/.mydefaults/browser-lock"
@@ -120,10 +126,13 @@ function open-link() {
   if [ "$EXT" = "" ]; then
     if [[ "$LINK" =~ "https://hangouts.google.com/hangouts/" ]]
     then CMD="$HANGOUTS$CMD"
+    elif youtube-dl "$LINK" -j 2>&1 >/dev/null
+    then CMD="$VIDEO1 $CMD $VIDEO2"
     else CMD="$BROWSER $CMD"
     fi
-  else
-    CMD="${MEDIA[$EXT]} $CMD"
+  elif youtube-dl "$LINK" -j 2>&1 >/dev/null
+  then CMD="$VIDEO1 $CMD $VIDEO2"
+  else CMD="${MEDIA[$EXT]} $CMD"
   fi
   if [ "$1" = "return" ]; then
     # open it in the computer that clicked because ROUTER is busy
