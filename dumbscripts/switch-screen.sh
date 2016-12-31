@@ -1,13 +1,18 @@
 #!/bin/bash
 # Swaps the current window between 2 monitors that are on the same "screen" without you having to drag it and perfectly align it
 SCREENWIDTH=1920 # left monitor's X resolution
-ERRORX=2 # xdotool moves windows by slightly too much for some reason???
-ERRORY=56
+# xdotool moves certain windows by slightly too much for some reason???
+ERRORX=0
+ERRORY=0
 WINDOW=$(xdotool getactivewindow)
 WINDOWPOS=$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Position: \([0-9]\+\),\([0-9]\+\) .*/\1 \2/')
 WINDOWX=$(echo $WINDOWPOS | awk '{print $1}')
 WINDOWY=$(echo $WINDOWPOS | awk '{print $2}')
 POS=""
+if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]; then
+  ERRORX=2
+  ERRORY=56
+fi
 if [ $WINDOWX -ge $SCREENWIDTH ]
 then POS=$(expr $WINDOWX - 1920 + 120) # 120 is my XFCE panel width
 else POS=$(expr $WINDOWX + 1920 - 120)

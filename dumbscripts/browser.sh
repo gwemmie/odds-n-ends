@@ -34,6 +34,12 @@
 # 6. Recognizes Google Hangouts links and opens them in a separate
 # browser. I added this so I can call someone from another computer and
 # get a Chrome window of the call on my main computer.
+# 7. Recognizes download-vid.sh links and uses a new download-vid.sh
+# feature to ask if you'd rather download it, play it, or open it in
+# your browser. At first, I was using youtube-dl -j to check for those
+# links, but it made every link take way too long to open, and I'm only
+# going to pick the download option when it's specifically a link that
+# download-vid.sh supports anyway.
 
 # Now has integration with download-vid.sh to automatically open video
 # links that are compatible with youtube-dl according to YOUR choice at
@@ -66,7 +72,7 @@ COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||')"
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's/&h=[a-zA-Z0-9_]\+$//')" # that last &h=alphanumeric_$ match is to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website
 RETURN="$HOME/.mydefaults/browser-return"
 OPENED="$HOME/.mydefaults/browser-opened"
 LOCK="$HOME/.mydefaults/browser-lock"
@@ -126,11 +132,11 @@ function open-link() {
   if [ "$EXT" = "" ]; then
     if [[ "$LINK" =~ "https://hangouts.google.com/hangouts/" ]]
     then CMD="$HANGOUTS$CMD"
-    elif youtube-dl "$LINK" -j 2>&1 >/dev/null
+    elif video-dl --compatible "$LINK"
     then CMD="$VIDEO1 $CMD $VIDEO2"
     else CMD="$BROWSER $CMD"
     fi
-  elif youtube-dl "$LINK" -j 2>&1 >/dev/null
+  elif video-dl --compatible "$LINK"
   then CMD="$VIDEO1 $CMD $VIDEO2"
   else CMD="${MEDIA[$EXT]} $CMD"
   fi
