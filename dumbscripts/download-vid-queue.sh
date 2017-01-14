@@ -16,7 +16,8 @@ function anywait {
 if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
   echo $$ >> "$PIDFILE"
   if [ "$(sed -n 1p "$PIDFILE")" != "$$" ]; then
-    echo "Downloads ahead in line (by PID) are: $(sed "/$$/d" "$PIDFILE" | perl -0777 -pe 's/\n/,/g')"
+    echo "PID: $$"
+    echo "Downloads ahead in line (by PID) are: $(sed "/$$/d" "$PIDFILE" | perl -0777 -pe 's/\n/,/g' | sed 's/,$//')"
     while [ "$(sed -n 1p "$PIDFILE")" != "$$" ]; do
       PID=$(sed -n 1p "$PIDFILE")
       if ! ps -p "$PID" > /dev/null

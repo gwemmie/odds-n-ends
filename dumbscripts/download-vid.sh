@@ -51,6 +51,11 @@
 # $HOME/.dumbscripts/download-vid-queue.sh, which is now a file in this
 # git repo.
 
+# Another new feature: if you feed it a text file with URLs separated by
+# whitespace instead of a single URL, it will download each of those
+# URLs in order, using queue-dl to (annoyingly) pop up a download window
+# for each one. Currently not working.
+
 # If you, like my brother, have a crippling monthly bandwidth limit, you
 # can put the MAC address of your router in $LOWBAND to automatically
 # download videos in 360p when you're home, and go for HD otherwise.
@@ -86,12 +91,24 @@ else
   fi
 fi
 DEST="$HOME/Downloads/$FOLDER"
+# text file queue mode--not working because of weird quote issues
+#if [ -f "$URL" ]; then
+#  FILE="$URL"
+#  readarray URLS <"$FILE"
+#  for URL in "${URLS[@]}"; do
+#  URL="$(echo -n "$URL")" # readarray leaves the newline in there
+#  nohup $HOME/.dumbscripts/download-vid.sh "$URL" "$FOLDER" "$EXOPT" >/dev/null & sleep 0.5
+#  done
+#  exit 0
+#fi
 
 function compatibility_check {
   echo -n "Checking for compatibility... "
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]] \
   || [[ "$URL" =~ "cinemassacre.com" ]] || [[ "$URL" =~ "channelawesome.com" ]] \
+  || [[ "$URL" =~ "teamfourstar.com" ]] \
   || [[ "$URL" =~ "vessel.com" ]] \
+  || [[ "$URL" =~ "dailymotion.com" ]] \
   || [[ "$URL" =~ "crunchyroll.com" ]] \
   || [[ "$URL" =~ "vimeo.com" ]] \
   || [[ "$URL" =~ "cc.com" ]] \
@@ -152,8 +169,12 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   || [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"18/best[height<=360]\""
+  elif [[ "$URL" =~ "teamfourstar.com" ]]; then
+    OPT="-f \"510/5/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f \"mp4-360-500K/best[height<=360]\""
+  elif [[ "$URL" =~ "dailymotion.com" ]]; then
+    OPT="-f \"http-380/best[height<=380]\""
   elif [[ "$URL" =~ "crunchyroll.com" ]]; then
     OPT="$OPT -f \"hls-meta-0/360p/best[height<=360]\""
   elif [[ "$URL" =~ "vimeo.com" ]]; then
@@ -180,8 +201,12 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   || [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"22/best[height<=720]/18/best[height<=360]\""
+  elif [[ "$URL" =~ "teamfourstar.com" ]]; then
+    OPT="-f \"1120/6/best[height<=720]/510/5/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f \"mp4-720-2400K/best[height<=720]/mp4-360-500K/best[height<=360]\""
+  elif [[ "$URL" =~ "dailymotion.com" ]]; then
+    OPT="-f \"http-780/best[height<=780]/http-380/best[height<=380]\""
   elif [[ "$URL" =~ "crunchyroll.com" ]]; then
     OPT="$OPT -f \"hls-meta-2/720p/best[height<=720]/hls-meta-1/480p/hls-meta-0/360p/best[height<=360]\""
   elif [[ "$URL" =~ "vimeo.com" ]]; then
@@ -225,11 +250,12 @@ if [ "$1" != "--terminal" ]; then
     echo "#!/bin/bash" >/tmp/download-vid-ask.sh
     chmod +x /tmp/download-vid-ask.sh
     echo 'while true; do' | tee -a /tmp/download-vid-ask.sh
-    echo '  read -n 1 -p "Download, browser, player, or quit? [D/B/P/Q] " ANS' | tee -a /tmp/download-vid-ask.sh
+    echo '  read -n 1 -p "Download, browser, player, copy link, or quit? [D/B/P/C/Q] " ANS' | tee -a /tmp/download-vid-ask.sh
     echo '  case $ANS in' | tee -a /tmp/download-vid-ask.sh
     echo '    [dD] )' "echo; $CMD; break;;" | tee -a /tmp/download-vid-ask.sh
-    echo '    [bB] )' "nohup $BROWSER \"$URL\" >/dev/null & break;;" | tee -a /tmp/download-vid-ask.sh
-    echo '    [pP] )' "nohup $PLAYER \"$URL\" >/dev/null & break;;" | tee -a /tmp/download-vid-ask.sh
+    echo '    [bB] )' "nohup $BROWSER \"$URL\" >/dev/null & sleep 0.5; break;;" | tee -a /tmp/download-vid-ask.sh
+    echo '    [pP] )' "nohup $PLAYER \"$URL\" >/dev/null & sleep 0.5; break;;" | tee -a /tmp/download-vid-ask.sh
+    echo '    [cC] )' "echo -n \"$URL\" | xclip -selection c; sleep 0.5; break;;" | tee -a /tmp/download-vid-ask.sh
     echo '    [qQ] ) break;;' | tee -a /tmp/download-vid-ask.sh
     echo '       * ) echo "invalid option"' | tee -a /tmp/download-vid-ask.sh
     echo '  esac' | tee -a /tmp/download-vid-ask.sh
