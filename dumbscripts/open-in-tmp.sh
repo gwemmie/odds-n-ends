@@ -34,5 +34,5 @@ for i in "$@"; do
   fi
 done
 
-sleep 0.1
+sleep 0.2
 eval "$PLAYER" ${ARGS[@]} &

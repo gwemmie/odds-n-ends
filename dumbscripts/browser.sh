@@ -72,7 +72,7 @@ COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//' | sed 's/&source=gmail.*//' | sed 's/&sa=.*//')" # that last &h=alphanumeric_$ match is to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//' | sed 's/&source=gmail.*//' | sed 's/&sa=.*//')" # that last &h=alphanumeric_$ match is to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website
 RETURN="$HOME/.mydefaults/browser-return"
 OPENED="$HOME/.mydefaults/browser-opened"
 LOCK="$HOME/.mydefaults/browser-lock"

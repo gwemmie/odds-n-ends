@@ -33,7 +33,7 @@ if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
 else echo $$ > "$PIDFILE"
 fi
 youtube-dl "$@"
-sed -i "/$$/d" "$PIDFILE"
+sed -i "/^$$\$/d" "$PIDFILE"
 if [ "$(<"$PIDFILE")" = "" ]
 then rm "$PIDFILE"
 fi
