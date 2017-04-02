@@ -15,6 +15,7 @@ function anywait {
 
 if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
   echo $$ >> "$PIDFILE"
+  echo "Downloading $(youtube-dl --get-title "$@")..."
   if [ "$(sed -n 1p "$PIDFILE")" != "$$" ]; then
     echo "PID: $$"
     echo "Downloads ahead in line (by PID) are: $(sed "/$$/d" "$PIDFILE" | perl -0777 -pe 's/\n/,/g' | sed 's/,$//')"

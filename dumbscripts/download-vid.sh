@@ -65,9 +65,9 @@
 # Supported sites for automatic 360p are in that if-statement.
 # Also can do automatic 720p with MEDBAND.
 
-ROUTER="$(sudo $HOME/.dumbscripts/mac-address.sh $(ip route show match 0/0 | awk '{print $3}'))"
-LOWBAND=( "00:0D:93:21:9D:F4" "14:DD:A9:D7:67:14" )
-MEDBAND=( "08:86:3B:B4:EB:D4" )
+ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
+LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
+MEDBAND=( "08:86:3b:b4:eb:d4" )
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/mate-terminal
 BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER=//')
@@ -151,6 +151,9 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # it in quotes? Because that made the wildcard stop being a wildcard.
   if [ "$(grep -A2 '\[Events\]' -- *$ID.ass | sed -n 3p)" = "" ]; then rm -- *$ID.ass
   else mv -- *$ID.ass "$DEST$ID.ass"
+  fi
+  if [ "$(grep -A2 '\[Events\]' -- *$ID.ssa | sed -n 3p)" = "" ]; then rm -- *$ID.ssa
+  else mv -- *$ID.ssa "$DEST$ID.ssa"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   OPT="--write-sub --sub-lang enUS --recode-video mkv --embed-subs"

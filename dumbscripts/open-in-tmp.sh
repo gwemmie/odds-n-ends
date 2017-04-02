@@ -28,7 +28,7 @@ for i in "$@"; do
   else ARG="\"/tmp/$i\""
   fi
   # skip subtitles files
-  if [[ "$ARG" =~ ".srt" ]] || [[ "$ARG" =~ ".ass" ]] || [[ "$ARG" =~ ".sub" ]]
+  if [[ "$ARG" =~ ".srt" ]] || [[ "$ARG" =~ ".ass" ]] || [[ "$ARG" =~ ".ssa" ]] || [[ "$ARG" =~ ".sub" ]]
   then continue
   else ARGS+=( "$ARG" )
   fi
