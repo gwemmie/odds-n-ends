@@ -15,6 +15,7 @@ function anywait {
 
 if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
   echo $$ >> "$PIDFILE"
+  set +e # somehow, this is required, even though I never set -e earlier
   echo "Downloading $(youtube-dl --get-title "$@")..."
   if [ "$(sed -n 1p "$PIDFILE")" != "$$" ]; then
     echo "PID: $$"

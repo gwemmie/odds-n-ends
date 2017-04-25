@@ -80,12 +80,13 @@ LOCKTIME=5 # seconds to wait before being willing to open the same link
 AUDIO=/usr/bin/mplayer
 VIDEO=/usr/bin/smplayer
 IMAGE=/usr/bin/ristretto
-declare -A MEDIA=([".mp3"]=$AUDIO [".m4a"]=$AUDIO [".ogg"]=$AUDIO \
-                  [".wav"]=$AUDIO [".flac"]=$AUDIO [".aac"]=$AUDIO \
+TORRENT=/usr/bin/transmission-qt
+declare -A MEDIA=([".mp3"]=$AUDIO  [".m4a"]=$AUDIO  [".ogg"]=$AUDIO \
+                  [".wav"]=$AUDIO  [".flac"]=$AUDIO [".aac"]=$AUDIO \
                   [".alac"]=$VIDEO [".webm"]=$VIDEO [".mp4"]=$VIDEO \
-                  [".mkv"]=$VIDEO [".flv"]=$VIDEO [".avi"]=$VIDEO \
-                  [".jpg"]=$IMAGE [".jpeg"]=$IMAGE [".png"]=$IMAGE \
-                  [".gif"]=$IMAGE)
+                  [".mkv"]=$VIDEO  [".flv"]=$VIDEO  [".avi"]=$VIDEO \
+                  [".jpg"]=$IMAGE  [".jpeg"]=$IMAGE [".png"]=$IMAGE \
+                  [".gif"]=$IMAGE  [".torrent"]=$TORRENT)
 
 # Check for remote use mode: "if computer is not at home" (heh)
 #if [ $(hostname) != $(sed -n 1p $INFO/ROUTER) ] && [ $COMPUTER != $AT_HOME ]
