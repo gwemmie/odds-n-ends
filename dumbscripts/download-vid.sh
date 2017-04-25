@@ -68,8 +68,9 @@
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
 LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
 MEDBAND=( "08:86:3b:b4:eb:d4" )
+UKPROXY="139.59.179.106:3128"
 DOWNLOADER=queue-dl
-TERMINAL=/usr/bin/mate-terminal
+TERMINAL=/usr/bin/xfce4-terminal
 BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER=//')
 PLAYER=/usr/bin/smplayer
 if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
@@ -113,7 +114,8 @@ function compatibility_check {
   || [[ "$URL" =~ "vimeo.com" ]] \
   || [[ "$URL" =~ "cc.com" ]] \
   || [[ "$URL" =~ "ted.com" ]] \
-  || [[ "$URL" =~ "cwseed.com" ]]
+  || [[ "$URL" =~ "cwseed.com" ]] \
+  || [[ "$URL" =~ "bbc.co.uk" ]]
   then
     echo "Website is compatible"
     exit 0
@@ -160,6 +162,8 @@ elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "$URL")"
 elif [ "$URL" = "dailyshow" ]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "http://www.cc.com/shows/the-daily-show-with-trevor-noah/full-episodes")"
+elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+  OPT="--proxy \"$UKPROXY\""
 fi
 
 if [ "$2" = "--compatible" ]
@@ -171,7 +175,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]] \
   || [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
-    OPT="-f \"18/best[height<=360]\""
+    OPT="-f \"480p/best[height<=360]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]]; then
     OPT="-f \"510/5/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
@@ -188,6 +192,8 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
     OPT="-f \"http-1253/hls-1253/rtmp-600k/best[height<=360]\""
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f \"hls-640/640/best[height<=360]\""
+  elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+    OPT="$OPT -f \"best[height<=380]\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=360]\""
@@ -203,7 +209,7 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]] \
   || [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
-    OPT="-f \"22/best[height<=720]/18/best[height<=360]\""
+    OPT="-f \"720p/best[height<=720]/480p/best[height<=360]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]]; then
     OPT="-f \"1120/6/best[height<=720]/510/5/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
@@ -220,6 +226,8 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
     OPT="-f \"http-3976/hls-3976/rtmp-1500k/best[height<=720]/http-1253/hls-1253/rtmp-600k/best[height<=360]\""
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f \"hls-2100/2100/best[height<=720]/hls-640/640/best[height<=360]\""
+  elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+    OPT="$OPT -f \"best[height<=720]\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=720]\""
