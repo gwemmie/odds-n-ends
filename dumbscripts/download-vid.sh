@@ -65,10 +65,14 @@
 # Supported sites for automatic 360p are in that if-statement.
 # Also can do automatic 720p with MEDBAND.
 
+# New feature: backs up a list of your downloaded videos so that getting
+# them back isn't a nightmare if your hard drive dies before you back it
+# up.
+
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
 LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
 MEDBAND=( "08:86:3b:b4:eb:d4" )
-UKPROXY="139.59.179.106:3128" # taken from http://free-proxy-list.net/uk-proxy.html
+UKPROXY="138.68.178.196:8118" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/xfce4-terminal
 BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER=//')
@@ -164,6 +168,7 @@ elif [ "$URL" = "dailyshow" ]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "http://www.cc.com/shows/the-daily-show-with-trevor-noah/full-episodes")"
 elif [[ "$URL" =~ "bbc.co.uk" ]]; then
   OPT="--proxy \"$UKPROXY\""
+  DEST="${DEST}iplayer-temp/"
 fi
 
 if [ "$2" = "--compatible" ]
@@ -288,6 +293,11 @@ if [ "$ERROR" != 0 ] && [ "$ERROR" != 255 ]; then
   exit $ERROR
 fi
 
-if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]
-then mv "$DEST$ID.ass" "$(find $DEST -name "*$ID.mp4" | sed -n 1p | sed 's/\.mp4/\.ass/')"
+ls --group-directories-first $HOME/Downloads > $HOME/Dropbox/Settings/Scripts/Downloads
+
+if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]; then
+  mv "$DEST$ID.ass" "$(find $DEST -name "*$ID.mp4" | sed -n 1p | sed 's/\.mp4/\.ass/')"
+elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+  mv "$(ls "${DEST}*.mkv")" $HOME/Downloads/
+  rmdir "$DEST"
 fi

@@ -79,7 +79,7 @@ LOCK="$HOME/.mydefaults/browser-lock"
 LOCKTIME=5 # seconds to wait before being willing to open the same link
 AUDIO=/usr/bin/mplayer
 VIDEO=/usr/bin/smplayer
-IMAGE=/usr/bin/ristretto
+IMAGE=firefox # until that GTK image-URL-opening bug that I can't even track down or get any help on, finally gets fixed
 TORRENT=/usr/bin/transmission-qt
 declare -A MEDIA=([".mp3"]=$AUDIO  [".m4a"]=$AUDIO  [".ogg"]=$AUDIO \
                   [".wav"]=$AUDIO  [".flac"]=$AUDIO [".aac"]=$AUDIO \

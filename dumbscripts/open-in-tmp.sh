@@ -3,6 +3,9 @@
 # I made this because I keep freshly downloaded YouTube videos in a
 # Downloads folder until I watch them, and moving them myself every time
 # was getting cumbersome.
+# New feature: backs up a list of your downloaded videos so that getting
+# them back isn't a nightmare if your hard drive dies before you back it
+# up.
 
 PLAYER=/usr/bin/smplayer
 
@@ -19,6 +22,8 @@ for i in "$@"; do
   fi
   mv "$i" /tmp/
 done
+
+ls --group-directories-first $HOME/Downloads > $HOME/Dropbox/Settings/Scripts/Downloads
 
 ARGS=()
 for i in "$@"; do
