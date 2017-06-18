@@ -71,7 +71,7 @@
 
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
 LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
-MEDBAND=( "08:86:3b:b4:eb:d4" )
+MEDBAND=( "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" )
 UKPROXY="138.68.178.196:8118" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/xfce4-terminal
@@ -119,7 +119,8 @@ function compatibility_check {
   || [[ "$URL" =~ "cc.com" ]] \
   || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]] \
-  || [[ "$URL" =~ "bbc.co.uk" ]]
+  || [[ "$URL" =~ "bbc.co.uk" ]] \
+  || [[ "$URL" =~ "vid.me" ]]
   then
     echo "Website is compatible"
     exit 0
@@ -199,6 +200,8 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
     OPT="-f \"hls-640/640/best[height<=360]\""
   elif [[ "$URL" =~ "bbc.co.uk" ]]; then
     OPT="$OPT -f \"best[height<=380]\""
+  elif [[ "$URL" =~ "vid.me" ]]; then
+    OPT="$OPT -f \"480p/best[height<=380]\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=360]\""
@@ -233,6 +236,8 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
     OPT="-f \"hls-2100/2100/best[height<=720]/hls-640/640/best[height<=360]\""
   elif [[ "$URL" =~ "bbc.co.uk" ]]; then
     OPT="$OPT -f \"best[height<=720]\""
+  elif [[ "$URL" =~ "vid.me" ]]; then
+    OPT="$OPT -f \"720p/480p/best[height<=720]\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=720]\""
