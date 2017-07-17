@@ -9,7 +9,8 @@ WINDOWPOS=$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Positi
 WINDOWX=$(echo $WINDOWPOS | awk '{print $1}')
 WINDOWY=$(echo $WINDOWPOS | awk '{print $2}')
 POS=""
-if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]; then
+if ! ([[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]] \
+   || [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]); then
   ERRORX=2
   ERRORY=56
 fi
