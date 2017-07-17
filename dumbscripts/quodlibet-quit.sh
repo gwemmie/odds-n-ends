@@ -7,7 +7,7 @@ while true; do
     killall quodlibet
     killall quodlibet-monitor.sh
     pkill -f "dbus-monitor --profile interface='net.sacredchao.QuodLibet',member='SongStarted'"
-    notify-send "quodlibet has exit"
+    notify-send "quodlibet has exited"
     exit
   fi
   sleep 2

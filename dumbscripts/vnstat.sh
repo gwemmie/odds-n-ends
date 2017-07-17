@@ -14,7 +14,7 @@ fi
 
 # gets the adjusted value of vnstat's current count
 function adjusted-value {
-  OLD="$(/usr/bin/vnstat | grep $(date +%b) | sed 's|.*/.*/\s\+\([0-9]*\.*[0-9]*\s\+[A-Za-z]iB\)\s\+/.*|\1|')"
+  OLD="$(/usr/bin/vnstat | grep $(date +%b) | grep -v 'Database updated' | sed 's/.*|.*|\s\+\([0-9]*\.*[0-9]*\s\+[A-Za-z]iB\)\s\+|.*/\1/')"
   DIF="$(sed -n 1p "$TRACKER")"
   OLDNUM="$(echo $OLD | sed 's/\s\+[A-Za-z]iB//')"
   DIFNUM="$(echo $DIF | sed 's/\s\+[A-Za-z]iB//')"
@@ -59,6 +59,9 @@ if [ "$1" = "pause" ]; then
     echo "vnstat already $(sed -n 3p "$TRACKER")"
     exit
   fi
+  echo "Updating database..."
+  echo # for some reason, this is necessary to get a line break
+  sudo vnstat -u
   PAUSE="$(adjusted-value)"
   if [[ "$PAUSE" =~ "error" ]]; then
     echo "paused at something" >> "$TRACKER"
@@ -73,6 +76,8 @@ elif [ "$1" = "resume" ]; then
     echo "vnstat already resumed"
     exit
   fi
+  echo "Updating database..."
+  sudo vnstat -u
   OLD="$(sed -n 1p "$TRACKER")"
   DIF1="$(sed -n 3p "$TRACKER" | sed 's/paused at //')"
   DIF2="$(adjusted-value)"
@@ -123,7 +128,7 @@ else
   else
     NEW="$(echo $NEW | sed 's/\s\+[A-Za-z]iB//')"
     /usr/bin/vnstat | grep -B99 "$INTERFACE" | head -n -1
-    /usr/bin/vnstat | grep -A4 "$INTERFACE" | sed "s|\($(date +%b).*/.*/\s\+\)[0-9]*\.*[0-9]*\(\s\+[A-Za-z]iB\s\+/.*\)|\1$NEW\2|"
-    /usr/bin/vnstat | grep -A99 "$INTERFACE" | tail -n +6
+    /usr/bin/vnstat | grep -A10 "$INTERFACE" | sed "s/\($(date +%b).*|.*|\s\+\)[0-9]*\.*[0-9]*\(\s\+[A-Za-z]iB\s\+|.*\)/\1$NEW\2/"
+    /usr/bin/vnstat | grep -A99 "$INTERFACE" | tail -n +12
   fi
 fi

@@ -79,7 +79,7 @@ LOCK="$HOME/.mydefaults/browser-lock"
 LOCKTIME=5 # seconds to wait before being willing to open the same link
 AUDIO=/usr/bin/mplayer
 VIDEO=/usr/bin/smplayer
-IMAGE=firefox # until that GTK image-URL-opening bug that I can't even track down or get any help on, finally gets fixed
+IMAGE=/usr/bin/ristretto
 TORRENT=/usr/bin/transmission-qt
 declare -A MEDIA=([".mp3"]=$AUDIO  [".m4a"]=$AUDIO  [".ogg"]=$AUDIO \
                   [".wav"]=$AUDIO  [".flac"]=$AUDIO [".aac"]=$AUDIO \
@@ -131,7 +131,7 @@ function open-link() {
   local CMD="\"$LINK\""
   local EXT=$(MEDIA-contains "$LINK")
   if [ "$EXT" = "" ]; then
-    if [[ "$LINK" =~ "https://hangouts.google.com/hangouts/" ]]
+    if [[ "$LINK" =~ "https://hangouts.google.com/call/" ]]
     then CMD="$HANGOUTS$CMD"
     elif video-dl --compatible "$LINK"
     then CMD="$VIDEO1 $CMD $VIDEO2"
