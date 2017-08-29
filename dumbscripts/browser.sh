@@ -131,7 +131,8 @@ function open-link() {
   local CMD="\"$LINK\""
   local EXT=$(MEDIA-contains "$LINK")
   if [ "$EXT" = "" ]; then
-    if [[ "$LINK" =~ "https://hangouts.google.com/call/" ]]
+    if [[ "$LINK" =~ "https://hangouts.google.com/call/" ]] \
+    || [[ "$LINK" =~ "https://hangouts.google.com/el/CONVERSATION" ]]
     then CMD="$HANGOUTS$CMD"
     elif video-dl --compatible "$LINK"
     then CMD="$VIDEO1 $CMD $VIDEO2"
