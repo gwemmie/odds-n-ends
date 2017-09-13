@@ -145,6 +145,7 @@ function contains() {
 }
 
 if [[ "$URL" =~ "youtube.com" ]]; then
+  OPT="--cookies $HOME/.dumbscripts/download-vid-cookies.txt"
   ID="$(echo $URL | cut -f 2 -d "=")"
   $HOME/.local/share/git/youtube-ass/youtube-ass.py "$ID"
   # check for empty annotations file
@@ -178,8 +179,9 @@ fi
 
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
-  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]] \
-  || [[ "$URL" =~ "cinemassacre.com" ]] \
+  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
+    OPT="$OPT -f \"480p/best[height<=360]\""
+  elif [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"480p/best[height<=360]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]]; then
@@ -201,7 +203,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "bbc.co.uk" ]]; then
     OPT="$OPT -f \"best[height<=380]\""
   elif [[ "$URL" =~ "vid.me" ]]; then
-    OPT="$OPT -f \"480p/best[height<=380]\""
+    OPT="$OPT -f \"dash-video-avc1-1+dash-audio-und-mp4a-1\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=360]\""
@@ -214,8 +216,9 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   fi
 elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download medium quality..."
-  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]] \
-  || [[ "$URL" =~ "cinemassacre.com" ]] \
+  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
+    OPT="$OPT -f \"720p/best[height<=720]/480p/best[height<=360]\""
+  elif [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"720p/best[height<=720]/480p/best[height<=360]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]]; then
@@ -237,7 +240,7 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "bbc.co.uk" ]]; then
     OPT="$OPT -f \"best[height<=720]\""
   elif [[ "$URL" =~ "vid.me" ]]; then
-    OPT="$OPT -f \"720p/480p/best[height<=720]\""
+    OPT="$OPT -f \"dash-video-avc1-3+dash-audio-und-mp4a-1\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=720]\""
