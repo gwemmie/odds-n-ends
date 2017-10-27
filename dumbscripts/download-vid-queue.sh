@@ -16,7 +16,10 @@ function anywait {
 if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
   echo $$ >> "$PIDFILE"
   set +e # somehow, this is required, even though I never set -e earlier
-  echo "Downloading $(youtube-dl --get-title "$@")..."
+  # I like to type `queue-dl "nothing"; something` if I want something to happen after a download, like shutting down my computer, so this gets rid of the youtube-dl spam
+  if [ "$1" != "nothing" ]
+  then echo "Downloading $(youtube-dl --get-title "$@")..."
+  fi
   if [ "$(sed -n 1p "$PIDFILE")" != "$$" ]; then
     echo "PID: $$"
     echo "Downloads ahead in line (by PID) are: $(sed "/$$/d" "$PIDFILE" | perl -0777 -pe 's/\n/,/g' | sed 's/,$//')"
@@ -34,7 +37,9 @@ if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
   fi
 else echo $$ > "$PIDFILE"
 fi
-youtube-dl "$@"
+if [ "$1" != "nothing" ]
+then youtube-dl "$@"
+fi
 sed -i "/^$$\$/d" "$PIDFILE"
 if [ "$(<"$PIDFILE")" = "" ]
 then rm "$PIDFILE"

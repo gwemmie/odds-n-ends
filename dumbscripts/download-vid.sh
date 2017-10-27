@@ -72,7 +72,7 @@
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
 LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
 MEDBAND=( "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" )
-UKPROXY="138.68.178.196:8118" # taken from http://free-proxy-list.net/uk-proxy.html
+UKPROXY="91.229.222.163:53281" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/xfce4-terminal
 BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER=//')
@@ -120,6 +120,7 @@ function compatibility_check {
   || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]] \
   || [[ "$URL" =~ "bbc.co.uk" ]] \
+  || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]] \
   || [[ "$URL" =~ "vid.me" ]]
   then
     echo "Website is compatible"
@@ -168,7 +169,8 @@ elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "$URL")"
 elif [ "$URL" = "dailyshow" ]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "http://www.cc.com/shows/the-daily-show-with-trevor-noah/full-episodes")"
-elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+elif [[ "$URL" =~ "bbc.co.uk" ]] \
+  || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
   OPT="--proxy \"$UKPROXY\""
   DEST="${DEST}iplayer-temp/"
 fi
@@ -185,7 +187,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"480p/best[height<=360]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]]; then
-    OPT="-f \"510/5/best[height<=360]\""
+    OPT="-f \"dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f \"mp4-360-500K/best[height<=360]\""
   elif [[ "$URL" =~ "dailymotion.com" ]]; then
@@ -201,6 +203,8 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f \"hls-640/640/best[height<=360]\""
   elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+    OPT="$OPT -f \"best[height<=380]\""
+  elif [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
     OPT="$OPT -f \"best[height<=380]\""
   elif [[ "$URL" =~ "vid.me" ]]; then
     OPT="$OPT -f \"dash-video-avc1-1+dash-audio-und-mp4a-1\""
@@ -222,7 +226,7 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"720p/best[height<=720]/480p/best[height<=360]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]]; then
-    OPT="-f \"1120/6/best[height<=720]/510/5/best[height<=360]\""
+    OPT="-f \"dash-video-avc1-3+dash-audio-und-mp4a-3/best[height<=720]/dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=360]\""
   elif [[ "$URL" =~ "vessel.com" ]]; then
     OPT="-f \"mp4-720-2400K/best[height<=720]/mp4-360-500K/best[height<=360]\""
   elif [[ "$URL" =~ "dailymotion.com" ]]; then
@@ -238,6 +242,8 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "cwseed.com" ]]; then
     OPT="-f \"hls-2100/2100/best[height<=720]/hls-640/640/best[height<=360]\""
   elif [[ "$URL" =~ "bbc.co.uk" ]]; then
+    OPT="$OPT -f \"best[height<=720]\""
+  elif [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
     OPT="$OPT -f \"best[height<=720]\""
   elif [[ "$URL" =~ "vid.me" ]]; then
     OPT="$OPT -f \"dash-video-avc1-3+dash-audio-und-mp4a-1\""
