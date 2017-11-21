@@ -12,6 +12,9 @@ POS=""
 if ! ([[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]] \
    || [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]); then
   ERRORX=2
+fi
+# Firefox stopped needing ERRORY in version 57
+if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]; then
   ERRORY=56
 fi
 if [ $WINDOWX -ge $SCREENWIDTH ]
@@ -22,6 +25,7 @@ xdotool windowmove $WINDOW $(expr $POS - $ERRORX) $(expr $WINDOWY - $ERRORY)
 # window might be maximized (if it didn't move, that's our proof):
 if [ "$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Position: \([0-9]\+\),\([0-9]\+\) .*/\1 \2/')" = "$WINDOWPOS" ]; then
   xdotool keyup Control+Alt+s # shortcut used to run this script; interferes with Alt+F10
+  xdotool windowfocus $WINDOW
   xdotool key Alt+F10 # XFCE (un)maximize shortcut
   xdotool windowmove $WINDOW $(expr $POS - $ERRORX) $(expr $WINDOWY - $ERRORY)
   xdotool windowfocus $WINDOW
