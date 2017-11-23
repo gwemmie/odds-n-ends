@@ -19,7 +19,7 @@ function load-queue {
 
 function save-queue {
   # Had to break out xargs to support arbitrarily large queues.
-  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(quodlibet --print-queue | xargs -I{} -d '\n' python2 -c "import sys, urllib as ul; print ul.unquote_plus(sys.argv[1])" "{}" | sed 's|file://||g')"
+  echo -e "$(grep '~filename=' $HOME/.quodlibet/current | sed 's/~filename=//')\n$(quodlibet --print-queue | xargs -I{} -d '\n' python2 -c "import sys, urllib as ul; print ul.unquote(sys.argv[1])" "{}" | sed 's|file://||g')"
 }
 
 function check-queue {
