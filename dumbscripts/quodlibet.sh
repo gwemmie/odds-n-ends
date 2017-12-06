@@ -42,6 +42,7 @@ elif pgrep 'quodlibet' | grep -v $$; then
   exit
 fi
 
+touch $HOME/.dumbscripts/quodlibet-starting
 /usr/bin/quodlibet --run --hide-window &
 while ! ([[ "$(quodlibet --status)" =~ "paused" ]] \
       || [[ "$(quodlibet --status)" =~ "playing" ]])

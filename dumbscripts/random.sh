@@ -14,10 +14,28 @@
 # because every Linux image viewer that isnt Gwneview is inexplicably
 # missing tons of extremely basic and common features.
 
+FOLDERS=()
+COUNTER=0
+
 echo "random" > $HOME/.dumbscripts/random
 cd "$1"
+if [ "$3" = "--recursive" ]; then
+  SAVEIFS=$IFS
+  IFS=$(echo -en "\n\b")
+  for i in $(ls -1d */)
+  do FOLDERS+=( "$i" )
+  done
+  IFS=$SAVEIFS
+fi
 TIME="$2"
 while [ -f $HOME/.dumbscripts/random ]; do
+  if [ "$3" = "--recursive" ]; then
+    cd "${FOLDERS[$COUNTER]}"
+    let COUNTER+=1
+    if [ "$COUNTER" = "${#FOLDERS[@]}" ]
+    then COUNTER=0
+    fi
+  fi
   LINES=$(ls -1 "$1" | wc -l)
   RAND=$(expr $RANDOM + 1)
   LINE=$(expr $RAND % $LINES)
@@ -25,4 +43,7 @@ while [ -f $HOME/.dumbscripts/random ]; do
   if [[ "$FILE" =~ ".gif" ]]; then TIMEOUT=$(echo "$(exiftool -Duration "$FILE" | sed 's/Duration\W*: \([0-9].*\) s/\1/g') * 2 + 0.2" | bc)
   else TIMEOUT=$TIME ; fi
   timeout "$TIMEOUT"s viewnior --fullscreen "$FILE"
+  if [ "$3" = "--recursive" ]
+  then cd ..
+  fi
 done

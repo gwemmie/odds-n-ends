@@ -9,6 +9,8 @@
 # it support Clementine's web remote feature (another music player).
 # Sorry, this script doesn't keep lines under 80 chars long.
 
+set -x
+
 WINDOW="$(xdotool getwindowname $(xdotool getactivewindow))"
 if [[ "$WINDOW" =~ "plugin-container" ]] | [[ "$WINDOW" =~ "VLC media player" ]] | [[ "$WINDOW" =~ "SMPlayer" ]]; then
   sleep 0.1
@@ -26,6 +28,9 @@ else
 #    elif [ "$(pkill -0 -fc 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py')" = "0" ]; then
 #      python2 /home/jimi/.clementine-webremote/clementineWebRemote.py
     else
+      while [ -f "$HOME/.dumbscripts/quodlibet-starting" ]
+      do sleep 1
+      done
       quodlibet --play-pause &
     fi
   else
