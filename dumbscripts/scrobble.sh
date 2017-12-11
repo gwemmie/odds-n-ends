@@ -8,7 +8,7 @@
 # USAGE: scrobble.sh [[%Y-%m-%d.%H:%M]] <[file containing list of MP3s]
 
 # Change this to your own username after logging in with `scrobbler add-user <user>`
-USER=Jimi_James
+USERNAME=Jimi_James
 
 ERROR=0
 if ! hash scrobbler 2>/dev/null; then
@@ -72,7 +72,7 @@ do
 	# do some math around the duration because mp3info doesn't support outputting hours
 	HOURS="0"
 	MINUTES=$(echo "$DURATION" | sed 's/[0-9]*s//')
-	SECONDS=$(echo "$DURATION" | sed 's/[0-9]*m//')
+	SECOND=$(echo "$DURATION" | sed 's/[0-9]*m//')
 	MINUTESNUM=$(echo $MINUTES | sed 's/m//')
 	if [ $MINUTESNUM -ge 60 ]; then
 		HOURS=$(bc <<< "$MINUTESNUM / 60")
@@ -81,14 +81,14 @@ do
 		MINUTES+="m"
 	fi
 	HOURS+="h"
-	DURATION="${HOURS}${MINUTES}${SECONDS}"
+	DURATION="${HOURS}${MINUTES}${SECOND}"
 	ALBUM=$(operon print -p '<album>' "$LINE")
 	ARTIST=$(operon print -p '<artist>' "$LINE")
 	TITLE=$(operon print -p '<title>' "$LINE")
-	scrobbler scrobble -a "$ALBUM" -d "$DURATION" "$USER" "$ARTIST" "$TITLE" "$TIME"
+	scrobbler scrobble -a "$ALBUM" -d "$DURATION" "$USERNAME" "$ARTIST" "$TITLE" "$TIME"
 	echo "Scrobbled at $TIME"
 	# increase TIME by DURATION
-	if [ $(echo $SECONDS | sed 's/m//') -ge 30 ]; then
+	if [ $(echo $SECOND | sed 's/m//') -ge 30 ]; then
 		let MINUTESNUM+=1 # rounding up the seconds
 		MINUTES=$MINUTESNUM
 		MINUTES+="m"
