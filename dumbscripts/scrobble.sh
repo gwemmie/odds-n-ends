@@ -74,6 +74,7 @@ do
 	MINUTES=$(echo "$DURATION" | sed 's/[0-9]*s//')
 	SECOND=$(echo "$DURATION" | sed 's/[0-9]*m//')
 	MINUTESNUM=$(echo $MINUTES | sed 's/m//')
+	SECONDSNUM=$(echo $SECOND | sed 's/s//')
 	if [ $MINUTESNUM -ge 60 ]; then
 		HOURS=$(bc <<< "$MINUTESNUM / 60")
 		MINUTESNUM=$(expr $MINUTESNUM - $(bc <<< "60 * $HOURS"))
@@ -88,7 +89,7 @@ do
 	scrobbler scrobble -a "$ALBUM" -d "$DURATION" "$USERNAME" "$ARTIST" "$TITLE" "$TIME"
 	echo "Scrobbled at $TIME"
 	# increase TIME by DURATION
-	if [ $(echo $SECOND | sed 's/m//') -ge 30 ]; then
+	if [ $(echo $SECONDSNUM | sed 's/m//') -ge 30 ]; then
 		let MINUTESNUM+=1 # rounding up the seconds
 		MINUTES=$MINUTESNUM
 		MINUTES+="m"
