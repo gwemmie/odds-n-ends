@@ -22,7 +22,7 @@ if ! hash operon 2>/dev/null; then
 	then echo -n ", "
 	else echo -n "This script requires "
 	fi
-	echo "operon"
+	echo -n "operon"
 	ERROR=1
 fi
 if ! hash mp3info 2>/dev/null; then
@@ -30,7 +30,7 @@ if ! hash mp3info 2>/dev/null; then
 	then echo -n ", "
 	else echo -n "This script requires "
 	fi
-	echo "mp3utils"
+	echo -n "mp3utils"
 	ERROR=1
 fi
 if ! hash dateconv 2>/dev/null; then
@@ -38,7 +38,7 @@ if ! hash dateconv 2>/dev/null; then
 	then echo -n ", "
 	else echo -n "This script requires "
 	fi
-	echo "dateutils"
+	echo -n "dateutils"
 	ERROR=1
 fi
 # You can probably use dc instead just fine, but dc is acting super weird
@@ -49,11 +49,12 @@ if ! hash bc 2>/dev/null; then
 	then echo -n ", and "
 	else echo -n "This script requires "
 	fi
-	echo "bc"
+	echo -n "bc"
 	ERROR=1
 fi
-if [ "$ERROR" != "0" ]
-then exit 1
+if [ "$ERROR" != "0" ]; then
+	echo
+  exit 1
 fi
 
 # check for arg 1 and default to current time if no arg 1
