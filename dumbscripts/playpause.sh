@@ -31,10 +31,10 @@ else
       while [ -f "$HOME/.dumbscripts/quodlibet-starting" ]
       do sleep 1
       done
-      quodlibet --play-pause &
+      quodlibet --play-pause & disown
     fi
   else
     #pkill -f 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py'
-    quodlibet --play-pause &
+    quodlibet --play-pause & disown
   fi
 fi

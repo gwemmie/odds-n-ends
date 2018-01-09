@@ -40,4 +40,4 @@ for i in "$@"; do
 done
 
 sleep 0.2
-eval "$PLAYER" ${ARGS[@]} &
+eval "$PLAYER" ${ARGS[@]} & disown

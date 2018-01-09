@@ -28,4 +28,4 @@ do
 done
 IFS=$SAFEIFS
 
-/usr/bin/unison-x11 &
+/usr/bin/unison-x11 & disown

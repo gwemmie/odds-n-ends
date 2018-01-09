@@ -75,7 +75,7 @@ MEDBAND=( "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" "b8:c7:5d:cb:75:1d" )
 UKPROXY="91.229.222.163:53281" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/xfce4-terminal
-BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER=//')
+BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER="\?\([^"]\+\)"\?/\1/')
 PLAYER=/usr/bin/smplayer
 if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
   if [ "$2" = "--compatible" ]; then
@@ -182,7 +182,7 @@ fi
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
-    OPT="$OPT -f \"480p/best[height<=360]\""
+    OPT="$OPT -f \"18/43/best[height<=480]\""
   elif [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"480p/best[height<=360]\""
@@ -218,10 +218,12 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
     #   [nN]* ) exit;;
     # esac
   fi
+  QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
+  #sed -i "s/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=$QUALITY/" $HOME/.config/smplayer/smplayer.ini
 elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download medium quality..."
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
-    OPT="$OPT -f \"720p/best[height<=720]/480p/best[height<=360]\""
+    OPT="$OPT -f \"720p/best[height<=720]/480p/best[height<=480]\""
   elif [[ "$URL" =~ "cinemassacre.com" ]] \
   || [[ "$URL" =~ "channelawesome.com" ]]; then
     OPT="-f \"720p/best[height<=720]/480p/best[height<=360]\""
@@ -257,7 +259,11 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
     #   [nN]* ) exit;;
     # esac
   fi
-else echo "Trying to download high quality..."
+  QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
+  #sed -i "s/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=$QUALITY/" $HOME/.config/smplayer/smplayer.ini
+else
+  #sed -i 's/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=/' $HOME/.config/smplayer/smplayer.ini
+  echo "Trying to download high quality..."
 fi
 
 # the LC_ALL thing is to fix a bug where it needs LC_ALL to encode the
@@ -296,7 +302,7 @@ if [ "$1" != "--terminal" ]; then
   CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e \"bash -c '$(echo $CMD)'\""
 fi
 
-eval "$CMD"
+eval "$CMD" &
 ERROR=$?
 
 if [ "$ERROR" != 0 ] && [ "$ERROR" != 255 ]; then
@@ -315,3 +321,5 @@ elif [[ "$URL" =~ "bbc.co.uk" ]]; then
   mv "$(ls "${DEST}*.mkv")" $HOME/Downloads/
   rmdir "$DEST"
 fi
+
+disown -r && exit

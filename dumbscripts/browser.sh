@@ -60,7 +60,8 @@
 # files in a text editor while also opening an image file in your image
 # viewer. You had to pick one of those. Por qué no los dos?
 
-BROWSER=firefox
+# I do some funny stuff with multiple Firefox profiles now
+BROWSER="$HOME/.dumbscripts/firefox.sh default"
 VIDEO1=$HOME/.dumbscripts/download-vid.sh
 VIDEO2="./ --ask"
 HANGOUTS="google-chrome-stable --app="
@@ -146,7 +147,7 @@ function open-link() {
     # open it in the computer that clicked because ROUTER is busy
     CMD="/usr/bin/ssh $OPS $(sed -n 1p $INFO/$(<"$RETURN").info) DISPLAY=:0 $CMD"
   fi
-  eval "$CMD" &
+  eval "$CMD" & disown
 }
 
 # have to only open one link at a time for the "Double-click proof" to

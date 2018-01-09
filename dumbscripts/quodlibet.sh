@@ -52,4 +52,4 @@ load-queue ; quodlibet --stop &
 $HOME/.dumbscripts/quodlibet-quit.sh &
 $HOME/.dumbscripts/quodlibet-monitor.sh &
 
-exit
+disown -r && exit

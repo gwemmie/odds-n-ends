@@ -19,5 +19,5 @@ then for ((i=0; i<$NATS; i+=1)); do
 else FOUND_ROUTER="true"
 fi
 if [ "$FOUND_ROUTER" = "false" ]
-then $HOME/.dumbscripts/quodlibet.sh &
+then $HOME/.dumbscripts/quodlibet.sh & disown
 fi
