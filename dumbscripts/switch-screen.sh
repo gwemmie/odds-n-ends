@@ -9,8 +9,7 @@ WINDOWPOS=$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Positi
 WINDOWX=$(echo $WINDOWPOS | awk '{print $1}')
 WINDOWY=$(echo $WINDOWPOS | awk '{print $2}')
 POS=""
-if ! ([[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]] \
-   || [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]); then
+if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]; then
   ERRORX=2
 fi
 # Firefox stopped needing ERRORY in version 57
