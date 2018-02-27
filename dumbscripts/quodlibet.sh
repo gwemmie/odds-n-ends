@@ -1,14 +1,35 @@
 #!/bin/bash
 # A huge wrapper for quodlibet that does various things.
-QUEUE=$HOME/Dropbox/Settings/Scripts/quodlibet-queue
-LAST_PLAYER=$HOME/Dropbox/Settings/Scripts/quodlibet-player
-CURRENT=$(grep 'song = ' $HOME/.quodlibet/config | sed 's/song = //')
+SETTINGS=$HOME/Dropbox/Settings/Scripts
+QUEUE=$SETTINGS/quodlibet-queue
+LAST_PLAYER=$SETTINGS/quodlibet-player
+CURRENT=$SETTINGS/quodlibet-current
+SEEK=$SETTINGS/quodlibet-seek
+CURRENT_SONG=$(grep 'song = ' $HOME/.quodlibet/config | sed 's/song = //')
+CURRENT_SEEK=$(grep 'song = ' $HOME/.quodlibet/config | sed 's/seek = //')
+
+function save-queue {
+  if pgrep 'quodlibet' | grep -v $$
+  then cp $HOME/.quodlibet/current "$CURRENT"
+  else
+    CURRENT_SONG=$(grep 'song = ' $HOME/.quodlibet/config | sed 's/song = //')
+    echo "~filename=$CURRENT_SONG" > "$CURRENT"
+  fi
+  cp $HOME/.quodlibet/queue "$QUEUE"
+  echo $CURRENT_SEEK > "$SEEK"
+  hostname > "$LAST_PLAYER"
+  notify-send "quodlibet: queue saved"
+}
 
 killall quodlibet-wait.sh 2>/dev/null || true
 rm $HOME/.dumbscripts/quodlibet-found-router 2>/dev/null || true
 
 if [ ! $# -eq 0 ]; then
   quodlibet --run --play-file "$@" & disown
+  exit
+elif pgrep 'quodlibet' | grep -v $$; then
+  save-queue
+  notify-send "but it might be outdated since you didn't quit, until #1358 is fixed"
   exit
 fi
 
@@ -23,14 +44,16 @@ fi
 if ! grep -Fxq $(hostname) "$LAST_PLAYER"; then
   notify-send "quodlibet: switching from $(<"$LAST_PLAYER")"
   hostname > "$LAST_PLAYER"
-  CURRENT=$(sed -n 1p $QUEUE)
-  sed -i "s/song = .*/song = $CURRENT/" $HOME/.quodlibet/config
+  CURRENT_SONG="$(grep '~filename=' "$CURRENT" | sed 's/~filename=//')"
+  CURRENT_SEEK=$(<"$SEEK")
+  sed -i "s/song = .*/song = $CURRENT_SONG/" $HOME/.quodlibet/config
+  sed -i "s/seek = .*/seek = $CURRENT_SEEK/" $HOME/.quodlibet/config
+  cp "$CURRENT" $HOME/.quodlibet/current
   cp "$QUEUE" $HOME/.quodlibet/queue
-  sed -i '1d' $HOME/.quodlibet/queue
 fi
 
 # check for an outdated queue
-if grep -Fxq "$CURRENT" $HOME/.quodlibet/queue
+if grep -Fxq "$CURRENT_SONG" $HOME/.quodlibet/queue
 then notify-send -u critical -t 300000 "quodlibet: queue may be outdated"
 fi
 
@@ -38,13 +61,8 @@ fi
 QUODLIBET=$!
 wait $QUODLIBET
 disown $QUODLIBET
-
-# save queue
 sleep 1 # make sure there's time to save all the files
-CURRENT=$(grep 'song = ' $HOME/.quodlibet/config | sed 's/song = //')
-cp $HOME/.quodlibet/queue "$QUEUE"
-sed -i "1i $CURRENT" "$QUEUE"
-notify-send "quodlibet: queue saved"
+save-queue
 
 exit
 # I gave up on the stuff below this when upgrading to quodlibet 4

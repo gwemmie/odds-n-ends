@@ -129,6 +129,7 @@ function open-link() {
   fi
   echo "$LINK" > "$OPENED"
   # open link according to what it is
+  LINK="$(echo $LINK | sed 's/(/\\(/g' | sed 's/)/\\)/g')" # weird bug that popped up recently
   local CMD="\"$LINK\""
   local EXT=$(MEDIA-contains "$LINK")
   if [ "$EXT" = "" ]; then

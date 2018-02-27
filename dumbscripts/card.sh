@@ -12,8 +12,9 @@ MANAGER=lightdm # can change to gdm or whatever
 
 if [ "$DRIVER" = "nvidia" ] && xset q &>/dev/null; then
   echo "Run me again, as root, after logout ;)"
+  notify-send "card.sh: Run me again, as root, after logout ;)"
   $HOME/.dumbscripts/logout.sh
-  exit
+  exit 1
 fi
 
 if [ "$DRIVER" = "nvidia" ]; then
@@ -55,7 +56,7 @@ elif [ "$1" = "host" ]; then
   fi
 else
   echo "Provide an option: host or vm (virtual machine)"
-  exit
+  exit 1
 fi
 
 if [ "$DRIVER" = "nvidia" ]; then
