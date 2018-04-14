@@ -22,16 +22,11 @@ for i in "$@"; do
     notify-send "open-in-tmp.sh: error: file not found"
     exit 1
   fi
-  mv "$i" /tmp/
 done
 
 ARGS=()
 for i in "$@"; do
-  # get the last part of the path after the last slash, i.e. filename
-  if [[ "$i" =~ '/' ]]
-  then ARG="\"/tmp/$(echo $i | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1)\""
-  else ARG="\"/tmp/$i\""
-  fi
+  ARG="\"$i\""
   # skip subtitles files
   if [[ "$ARG" =~ ".srt" ]] || [[ "$ARG" =~ ".ass" ]] || [[ "$ARG" =~ ".ssa" ]] || [[ "$ARG" =~ ".sub" ]]
   then continue
@@ -39,5 +34,10 @@ for i in "$@"; do
   fi
 done
 
-sleep 0.2
-eval "$PLAYER" ${ARGS[@]} & disown
+eval "$PLAYER" ${ARGS[@]} &
+wait $!
+disown
+
+for i in "$@"; do
+  mv "$i" /tmp/
+done
