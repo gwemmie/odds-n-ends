@@ -1,5 +1,6 @@
 #!/bin/bash
-# Move video file(s) to /tmp, then open them.
+# Automatically move video file(s) to /tmp after viewing them.
+# (when the process that's viewing them closes)
 # I made this because I keep freshly downloaded YouTube videos in a
 # Downloads folder until I watch them, and moving them myself every time
 # was getting cumbersome.
