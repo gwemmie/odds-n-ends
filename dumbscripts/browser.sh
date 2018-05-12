@@ -28,7 +28,7 @@
 # with a Pyra, but for now, it will automatically open video links with
 # video-dl (see my download-vid.sh script) on the main home computer
 # (coming soon)
-# 5. Coming soon: a switch, that you can make into a desktop shortcut,
+# 5. Coming eventually: a switch, that you can make into a desktop shortcut,
 # that decides whether the computer will bother with trying to open
 # links on the main computer, or go with its own local browser.
 # 6. Recognizes Google Hangouts links and opens them in a separate
@@ -40,6 +40,7 @@
 # links, but it made every link take way too long to open, and I'm only
 # going to pick the download option when it's specifically a link that
 # download-vid.sh supports anyway.
+# 8. Automatically converts most mobile links to proper links.
 
 # Now has integration with download-vid.sh to automatically open video
 # links that are compatible with youtube-dl according to YOUR choice at
@@ -60,6 +61,9 @@
 # files in a text editor while also opening an image file in your image
 # viewer. You had to pick one of those. Por qué no los dos?
 
+# record the initial link, too, so it's easier to see what went wrong
+echo "$1" > "$OPENED"
+
 # I do some funny stuff with multiple Firefox profiles now
 BROWSER="$HOME/.dumbscripts/firefox.sh default"
 VIDEO1=$HOME/.dumbscripts/download-vid.sh
@@ -73,7 +77,9 @@ COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//' | sed 's/&source=gmail.*//' | sed 's/&sa=.*//')" # that last &h=alphanumeric_$ match is to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's_\(http.*://\)\(mobile\|m\)\._\1_' | sed 's/&source=gmail.*//' | sed 's/&sa=.*\(&\|\?\|$\)//' | sed 's/&h=.*\(&\|\?\|$\)//')"
+# to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website (now commented out because I no longer use Rambox)
+# | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//'
 RETURN="$HOME/.mydefaults/browser-return"
 OPENED="$HOME/.mydefaults/browser-opened"
 LOCK="$HOME/.mydefaults/browser-lock"
@@ -116,10 +122,10 @@ function open-link() {
   rm -f "$LOCK" || true
   # if link has been opened within past 2 seconds, just stop
   if [ -f "$OPENED" ]; then
-    if [ "$LINK" = "$(<"$OPENED")" ]; then
-      echo "$(expr $(stat -c %y $OPENED | sed "s/$(date +%Y-%m-%d\ %H:%M:)\([0-9][0-9]\).*/\1/") + 0 2>/dev/null)"
+    if [ "$1" = "$(sed -n 1p "$OPENED")" ]; then
+      echo "$(expr $(stat -c %y "$OPENED" | sed "s/$(date +%Y-%m-%d\ %H:%M:)\([0-9][0-9]\).*/\1/") + 0 2>/dev/null)"
       echo "$(expr $(date +%S) - 2)"
-      if [ "$(expr $(stat -c %y $OPENED | sed "s/$(date +%Y-%m-%d\ %H:%M:)\([0-9][0-9]\).*/\1/") + 0 2>/dev/null)" \
+      if [ "$(expr $(stat -c %y "$OPENED" | sed "s/$(date +%Y-%m-%d\ %H:%M:)\([0-9][0-9]\).*/\1/") + 0 2>/dev/null)" \
       -gt "$(expr $(date +%S) - $LOCKTIME)" ] &>/dev/null
       then exit
       else rm "$OPENED" || true
@@ -127,7 +133,7 @@ function open-link() {
     else rm "$OPENED" || true
     fi
   fi
-  echo "$LINK" > "$OPENED"
+  echo "$LINK" >> "$OPENED"
   # open link according to what it is
   LINK="$(echo $LINK | sed 's/(/\\(/g' | sed 's/)/\\)/g')" # weird bug that popped up recently
   local CMD="\"$LINK\""
