@@ -121,7 +121,8 @@ function compatibility_check {
   || [[ "$URL" =~ "cwseed.com" ]] \
   || [[ "$URL" =~ "bbc.co.uk" ]] \
   || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]] \
-  || [[ "$URL" =~ "vid.me" ]]
+  || [[ "$URL" =~ "vid.me" ]] \
+  || [[ "$URL" =~ "roosterteeth.com" ]]
   then
     echo "Website is compatible"
     exit 0
@@ -145,6 +146,7 @@ function contains() {
   return 1
 }
 
+# per-site miscellaneous extra params that have to happen before compatibility check
 if [[ "$URL" =~ "youtube.com" ]]; then
   OPT="--cookies $HOME/.dumbscripts/download-vid-cookies.txt"
   ID="$(echo $URL | cut -f 2 -d "=")"
@@ -173,12 +175,39 @@ elif [[ "$URL" =~ "bbc.co.uk" ]] \
   || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
   OPT="--proxy \"$UKPROXY\""
   DEST="${DEST}iplayer-temp/"
+elif [[ "$URL" =~ "roosterteeth.com" ]]; then
+  if ! hash jq 2>/dev/null ; then
+    echo "ERROR: roosterteeth.com support requires jq"
+    exit 1
+  fi
+  # just to make the following checks not break if $URL is just "roosterteeth.com/etc"
+  if ! [[ "$URL" =~ "http" ]]
+  then URL="https://$URL"
+  fi
+  TITLE="$(echo "$URL" | sed 's|https\?://roosterteeth.com/episode/\([^/]\+\)|\1|')"
+  if echo "$TITLE" | grep -E "https?://roosterteeth.com/" || [ "$TITLE" = "" ]; then
+    echo "ERROR: Couldn't get Rooster Teeth video title"
+    exit 1
+  fi
+  # capitalize and replace hyphens '-' with spaces ' ', so "camp-camp-episode-3' becomes 'Camp Camp Episode 3'
+  TITLE="$(echo "$TITLE" | sed 's/^\(.\)/\u\1/' | sed 's/-\(.\)/ \u\1/g')"
+  API_URL="$(echo "$URL" | sed 's|roosterteeth.com/episode/\(.\+\)|svod-be.roosterteeth.com/api/v1/episodes/\1/videos|')"
+  URL="$(curl "$API_URL" 2>/dev/null | jq -r '.data[].attributes[]' | grep http)"
+  if echo "$URL" | grep -E "https?://roosterteeth.com/" || [ "$URL" = "" ] \
+  || [[ "$URL" =~ "parse error" ]]; then
+    echo "ERROR: Couldn't get Rooster Teeth API URL" | tee "${DEST}Rooster Teeth - $TITLE"
+    echo "\$API_URL=$API_URL" >> "${DEST}Rooster Teeth - $TITLE"
+    exit 1
+  fi
+  # we no longer know exactly what the roosterteeth.com URL is, so we have to keep track a simpler way when it comes to later options
+  ROOSTER_TEETH="true"
 fi
 
 if [ "$2" = "--compatible" ]
 then compatibility_check # will result in an exit after execution
 fi
 
+# per-site quality params
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
@@ -208,6 +237,8 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
     OPT="$OPT -f \"best[height<=380]\""
   elif [[ "$URL" =~ "vid.me" ]]; then
     OPT="$OPT -f \"dash-video-avc1-1+dash-audio-und-mp4a-1\""
+  elif [ "$ROOSTER_TEETH" = "true" ]; then
+    OPT="-f \"best[height<=360]\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=360]\""
@@ -249,6 +280,8 @@ elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
     OPT="$OPT -f \"best[height<=720]\""
   elif [[ "$URL" =~ "vid.me" ]]; then
     OPT="$OPT -f \"dash-video-avc1-3+dash-audio-und-mp4a-1\""
+  elif [ "$ROOSTER_TEETH" = "true" ]; then
+    OPT="-f \"best[height<=720]\""
   else
     echo "WARNING: Unknown website. May not get desired quality."
     OPT="-f \"best[height<=720]\""
@@ -270,11 +303,14 @@ fi
 # filename properly
 CMD="env LC_ALL=$LANG $DOWNLOADER $OPT ${EXOPT[@]} -o"
 
+# per-site destination params
 if [[ "$URL" =~ "cc.com" ]]; then
   CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""
 elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]]; then
   CMD="$CMD \"$DEST%(extractor)s - %(title)s $ID.%(ext)s\" \"$URL\""
+elif [ "$ROOSTER_TEETH" = "true" ]; then
+  CMD="$CMD \"${DEST}Rooster Teeth - $TITLE.%(ext)s\" \"$URL\""
 else
   CMD="$CMD \"$DEST%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
 fi
