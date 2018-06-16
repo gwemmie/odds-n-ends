@@ -96,6 +96,7 @@ else
   fi
 fi
 DEST="$HOME/Downloads/$FOLDER"
+ROOSTER_TEETH="false"
 # text file queue mode--not working because of weird quote issues
 #if [ -f "$URL" ]; then
 #  FILE="$URL"
@@ -122,7 +123,7 @@ function compatibility_check {
   || [[ "$URL" =~ "bbc.co.uk" ]] \
   || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]] \
   || [[ "$URL" =~ "vid.me" ]] \
-  || [[ "$URL" =~ "roosterteeth.com" ]]
+  || [ "$ROOSTER_TEETH" = "true" ]
   then
     echo "Website is compatible"
     exit 0
