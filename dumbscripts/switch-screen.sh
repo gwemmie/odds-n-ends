@@ -9,12 +9,20 @@ WINDOWPOS=$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Positi
 WINDOWX=$(echo $WINDOWPOS | awk '{print $1}')
 WINDOWY=$(echo $WINDOWPOS | awk '{print $2}')
 POS=""
-if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]; then
-  ERRORX=2
+# Firefox also started needing ERRORX in v60
+if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]] \
+&& ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
+then ERRORX=2
+elif [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
+then ERRORX=23
 fi
 # Firefox stopped needing ERRORY in version 57
-if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]]; then
-  ERRORY=56
+# and started needing it again when I got to hide the titlebar in v60
+if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]] \
+&& ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
+then ERRORY=56
+elif [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
+then ERRORY=14
 fi
 if [ $WINDOWX -ge $SCREENWIDTH ]
 then POS=$(expr $WINDOWX - 1920 + 120) # 120 is my XFCE panel width
@@ -26,6 +34,7 @@ if [ "$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Position: 
   xdotool keyup Control+Alt+s # shortcut used to run this script; interferes with Alt+F10
   xdotool windowfocus $WINDOW
   xdotool key Alt+F10 # XFCE (un)maximize shortcut
+  sleep 0.2
   xdotool windowmove $WINDOW $(expr $POS - $ERRORX) $(expr $WINDOWY - $ERRORY)
   xdotool windowfocus $WINDOW
   xdotool key Alt+F10 # maximize it again when it's moved over
