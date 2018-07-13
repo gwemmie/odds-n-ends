@@ -1,13 +1,19 @@
 #!/bin/bash
 # Automatically delete certain files that should probably be deleted
 
+# Don't bother deleting thumbnails that are gonna be reloaded soon anyway
+THUMB_FILES=$(find -L $HOME/.mythtv/* $HOME/Downloads/* $HOME/Pictures/* $HOME/Videos/* | grep -Ei "png|jpg|mp4|mkv|webm")
+THUMB_FILES=${THUMB_FILES// /%20}
+for FILE in $THUMB_FILES; do
+    FILE_MD5=$(printf '%s' "file://$FILE" | md5sum)
+    FILE_THUMB="$HOME/.cache/thumbnails/normal/${FILE_MD5%  -*}.png"
+    touch -c "$FILE_THUMB"
+done
+
 # thumbails > 30 days old
-cd $HOME/.thumbnails/normal/
-for f in $(find -mtime +30); do rm "$f"; done
-cd $HOME/.cache/thumbnails/large/
-for f in $(find -mtime +30); do rm "$f"; done
-cd $HOME/.cache/thumbnails/normal/
-for f in $(find -mtime +30); do rm "$f"; done
+for f in $(find $HOME/.thumbnails/normal/* -mtime +30); do rm "$f"; done
+for f in $(find $HOME/.cache/thumbnails/large/* -mtime +30); do rm "$f"; done
+for f in $(find $HOME/.cache/thumbnails/normal/* -mtime +30); do rm "$f"; done
 
 # flash cache every boot
 rm -rf $HOME/.adobe $HOME/.macromedia

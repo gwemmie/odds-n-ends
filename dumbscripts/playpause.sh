@@ -18,7 +18,7 @@ if [[ "$WINDOW" =~ "plugin-container" ]] | [[ "$WINDOW" =~ "VLC media player" ]]
 elif [ -f $HOME/.dumbscripts/random ]; then
   rm $HOME/.dumbscripts/random
 else
-  if pacmd list sinks | grep -Fq 'MM100\|LBT-PAR500'
+  if pacmd list sinks | grep -Fq 'HD 4.40BT\|MM100\|LBT-PAR500'
   then
     if [[ "$WINDOW" =~ "Roll20" ]]; then
       xdotool mousemove 1900 1000
