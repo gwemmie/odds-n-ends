@@ -3,7 +3,7 @@
 # driver and a QEMU/KVM virtual machine's vfio-pci driver for passthru
 set -e
 
-PCI=0000:07:00.0
+PCI=0000:05:00.0
 APCI=$(echo $PCI | sed -e "s/0$/1/")
 GPU="/sys/bus/pci/devices/$PCI"
 AUDIO="/sys/bus/pci/devices/$APCI"

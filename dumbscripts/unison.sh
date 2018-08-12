@@ -28,4 +28,4 @@ do
 done
 IFS=$SAFEIFS
 
-/usr/bin/unison-x11 & disown
+/usr/bin/unison-gtk2 & disown

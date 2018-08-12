@@ -9,20 +9,20 @@ WINDOWPOS=$(xdotool getwindowgeometry $WINDOW | grep Position | sed 's/\s*Positi
 WINDOWX=$(echo $WINDOWPOS | awk '{print $1}')
 WINDOWY=$(echo $WINDOWPOS | awk '{print $2}')
 POS=""
-# Firefox also started needing ERRORX in v60
+# Firefox also started needing ERRORX in v60 either because I was using nouveau, because of not using gtk3-mushrooms, or until v61 (all 3 of those system changes happened at the same time)
 if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]] \
 && ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
 then ERRORX=2
-elif [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
-then ERRORX=23
+#elif [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
+#then ERRORX=23
 fi
 # Firefox stopped needing ERRORY in version 57
-# and started needing it again when I got to hide the titlebar in v60
+# and started needing it again when I got to hide the titlebar in v60 either because I was using nouveau, because of not using gtk3-mushrooms (but still with GTK_CSD=0 so I can hide the titlebar), or until v61
 if ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Steam" ]] \
 && ! [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
 then ERRORY=56
-elif [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
-then ERRORY=14
+#elif [[ "$(xdotool getwindowname $WINDOW)" =~ "Firefox" ]]
+#then ERRORY=14
 fi
 if [ $WINDOWX -ge $SCREENWIDTH ]
 then POS=$(expr $WINDOWX - 1920 + 120) # 120 is my XFCE panel width

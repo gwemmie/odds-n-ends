@@ -20,10 +20,12 @@ elif [ -f $HOME/.dumbscripts/random ]; then
 else
   if pacmd list sinks | grep -Fq 'HD 4.40BT\|MM100\|LBT-PAR500'
   then
-    if [[ "$WINDOW" =~ "Roll20" ]]; then
-      xdotool mousemove 1900 1000
-      xdotool mousedown 1
-      xdotool mouseup 1
+    if [[ "$WINDOW" =~ "Roll20" ]] | [[ "$WINDOW" =~ "Discord" ]]; then
+      if [[ "$WINDOW" =~ "Roll20" ]]; then
+        xdotool mousemove 1900 1000
+        xdotool mousedown 1
+        xdotool mouseup 1
+      fi
       xdotool key 'i' 'm' "space" 'a' 'f' 'k' KP_Enter
 #    elif [ "$(pkill -0 -fc 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py')" = "0" ]; then
 #      python2 /home/jimi/.clementine-webremote/clementineWebRemote.py
