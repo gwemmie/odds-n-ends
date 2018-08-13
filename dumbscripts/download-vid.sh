@@ -95,7 +95,10 @@ else
   else EXOPT="${@:3}"
   fi
 fi
-DEST="$HOME/Downloads/$FOLDER"
+if [[ "$URL" =~ "cc.com" ]]
+then DEST="$HOME/Downloads/Ongoing TV/$FOLDER"
+else DEST="$HOME/Downloads/$FOLDER"
+fi
 ROOSTER_TEETH="false"
 # text file queue mode--not working because of weird quote issues
 #if [ -f "$URL" ]; then
@@ -309,11 +312,11 @@ if [[ "$URL" =~ "cc.com" ]]; then
   CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""
 elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]]; then
-  CMD="$CMD \"$DEST%(extractor)s - %(title)s $ID.%(ext)s\" \"$URL\""
+  CMD="$CMD \"$DEST%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
 elif [ "$ROOSTER_TEETH" = "true" ]; then
-  CMD="$CMD \"${DEST}Rooster Teeth - $TITLE.%(ext)s\" \"$URL\""
+  CMD="$CMD \"${DEST}Rooster Teeth/$TITLE.%(ext)s\" \"$URL\""
 else
-  CMD="$CMD \"$DEST%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
+  CMD="$CMD \"$DEST%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
 fi
 
 if [ "$1" != "--terminal" ]; then
