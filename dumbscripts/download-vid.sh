@@ -95,7 +95,9 @@ else
   else EXOPT="${@:3}"
   fi
 fi
-if [[ "$URL" =~ "cc.com" ]]
+if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
+|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbc.co.uk" ]] \
+|| [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]
 then DEST="$HOME/Downloads/Ongoing TV/$FOLDER"
 else DEST="$HOME/Downloads/$FOLDER"
 fi
@@ -164,10 +166,10 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # what. I had to do that because I've had to deal with files named
   # "--$ID.ass", which were interpreted as arguments. Why not just put
   # it in quotes? Because that made the wildcard stop being a wildcard.
-  if [ "$(grep -A2 '\[Events\]' -- *$ID.ass | sed -n 3p)" = "" ]; then rm -- *$ID.ass
+  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ass | sed -n 3p)" ]; then rm -- *$ID.ass
   else mv -- *$ID.ass "$DEST$ID.ass"
   fi
-  if [ "$(grep -A2 '\[Events\]' -- *$ID.ssa | sed -n 3p)" = "" ]; then rm -- *$ID.ssa
+  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ssa | sed -n 3p)" ]; then rm -- *$ID.ssa
   else mv -- *$ID.ssa "$DEST$ID.ssa"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
@@ -189,7 +191,7 @@ elif [[ "$URL" =~ "roosterteeth.com" ]]; then
   then URL="https://$URL"
   fi
   TITLE="$(echo "$URL" | sed 's|https\?://roosterteeth.com/episode/\([^/]\+\)|\1|')"
-  if echo "$TITLE" | grep -E "https?://roosterteeth.com/" || [ "$TITLE" = "" ]; then
+  if echo "$TITLE" | grep -E "https?://roosterteeth.com/" || [ -z "$TITLE" ]; then
     echo "ERROR: Couldn't get Rooster Teeth video title"
     exit 1
   fi
@@ -197,7 +199,7 @@ elif [[ "$URL" =~ "roosterteeth.com" ]]; then
   TITLE="$(echo "$TITLE" | sed 's/^\(.\)/\u\1/' | sed 's/-\(.\)/ \u\1/g')"
   API_URL="$(echo "$URL" | sed 's|roosterteeth.com/episode/\(.\+\)|svod-be.roosterteeth.com/api/v1/episodes/\1/videos|')"
   URL="$(curl "$API_URL" 2>/dev/null | jq -r '.data[].attributes[]' | grep http)"
-  if echo "$URL" | grep -E "https?://roosterteeth.com/" || [ "$URL" = "" ] \
+  if echo "$URL" | grep -E "https?://roosterteeth.com/" || [ -z "$URL" ] \
   || [[ "$URL" =~ "parse error" ]]; then
     echo "ERROR: Couldn't get Rooster Teeth API URL" | tee "${DEST}Rooster Teeth - $TITLE"
     echo "\$API_URL=$API_URL" >> "${DEST}Rooster Teeth - $TITLE"
@@ -308,15 +310,16 @@ fi
 CMD="env LC_ALL=$LANG $DOWNLOADER $OPT ${EXOPT[@]} -o"
 
 # per-site destination params
-if [[ "$URL" =~ "cc.com" ]]; then
-  CMD="$CMD \"$DEST%(title)s $ID.%(ext)s\" \"$URL\""
+if [[ "$URL" =~ "cc.com" ]]
+then CMD="$CMD \"${DEST}%(title)s $ID.%(ext)s\" \"$URL\""
 elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
-  || [[ "$URL" =~ "cwseed.com" ]]; then
-  CMD="$CMD \"$DEST%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
-elif [ "$ROOSTER_TEETH" = "true" ]; then
-  CMD="$CMD \"${DEST}Rooster Teeth/$TITLE.%(ext)s\" \"$URL\""
-else
-  CMD="$CMD \"$DEST%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
+  || [[ "$URL" =~ "cwseed.com" ]]
+then CMD="$CMD \"${DEST}%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
+elif [ "$ROOSTER_TEETH" = "true" ]
+then CMD="$CMD \"${DEST}Rooster Teeth/$TITLE.%(ext)s\" \"$URL\""
+elif [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ]
+then CMD="$CMD \"${DEST}%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
+else CMD="$CMD \"${DEST}%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
 fi
 
 if [ "$1" != "--terminal" ]; then
@@ -343,6 +346,7 @@ if [ "$1" != "--terminal" ]; then
 fi
 
 eval "$CMD" &
+wait $!
 ERROR=$?
 
 if [ "$ERROR" != 0 ] && [ "$ERROR" != 255 ]; then
@@ -361,5 +365,8 @@ elif [[ "$URL" =~ "bbc.co.uk" ]]; then
   mv "$(ls "${DEST}*.mkv")" $HOME/Downloads/
   rmdir "$DEST"
 fi
+
+# my own script to automate some folder management with downloaded videos
+$HOME/.dumbscripts/update-downloads.sh & disown
 
 disown -r && exit

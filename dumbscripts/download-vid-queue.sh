@@ -2,6 +2,7 @@
 # Wrapper for youtube-dl to download videos in a queue instead of all at
 # once
 # Order is FIFO; each line of $PIDFILE is a PID
+ERROR=0
 PIDFILE=/tmp/queue-dl
 
 # Plagiarized from http://stackoverflow.com/questions/1058047/wait-for-any-process-to-finish
@@ -37,10 +38,13 @@ if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
   fi
 else echo $$ > "$PIDFILE"
 fi
-if [ "$1" != "nothing" ]
-then youtube-dl "$@"
+if [ "$1" != "nothing" ]; then
+  youtube-dl "$@"
+  ERROR=$?
 fi
 sed -i "/^$$\$/d" "$PIDFILE"
 if [ "$(<"$PIDFILE")" = "" ]
 then rm "$PIDFILE"
 fi
+
+exit $ERROR
