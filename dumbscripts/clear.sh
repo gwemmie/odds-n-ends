@@ -22,6 +22,9 @@ for f in $(find $HOME/.cache/thumbnails/normal/* -mtime +30); do rm "$f"; done
 # flash cache every boot
 rm -rf $HOME/.adobe $HOME/.macromedia
 
+# update Downloads folder
+$HOME/.dumbscripts/update-downloads.sh & disown
+
 # trash items > 30 days old
 # not implemented
 # Hey, I'm lazy. My trash bin has been constantly broken in various ways

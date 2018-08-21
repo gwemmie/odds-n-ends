@@ -173,7 +173,7 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   else mv -- *$ID.ssa "$DEST$ID.ssa"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-  OPT="--write-sub --sub-lang enUS --recode-video mkv --embed-subs"
+  OPT="--write-sub --sub-lang enUS --recode-video mkv --postprocessor-args "-c:copy" --embed-subs"
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "$URL")"
 elif [ "$URL" = "dailyshow" ]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "http://www.cc.com/shows/the-daily-show-with-trevor-noah/full-episodes")"

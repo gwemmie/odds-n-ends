@@ -77,7 +77,7 @@ COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's_\(http.*://\)\(mobile\|m\)\._\1_' | sed 's/&source=gmail.*//' | sed 's/&sa=.*\(&\|\?\|$\)//' | sed 's/&h=.*\(&\|\?\|$\)//')"
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's_\(http.*://\(en\.\)\?\)\(mobile\|m\)\._\1_' | sed 's/&source=gmail.*//' | sed 's/&sa=.*\(&\|\?\|$\)//' | sed 's/&h=.*\(&\|\?\|$\)//')"
 # to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website (now commented out because I no longer use Rambox)
 # | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//'
 RETURN="$HOME/.mydefaults/browser-return"
