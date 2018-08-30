@@ -138,6 +138,27 @@ function compatibility_check {
   fi
 }
 
+# this function will be used by another temp sh file
+cat >/tmp/download-vid-error.sh <<\EOF
+#!/bin/bash
+function error_handling() { # args: (error code, $DOWNLOADER, $CMD, [--terminal])
+  if [ "$1" != 0 ] && [ "$1" != 255 ]; then
+    echo
+    echo "ERROR: Something went wrong with $2"
+    echo "Command attempted: $3"
+    echo
+    if [ "$4" != "--terminal" ]; then
+      read -n1 -r -p "Press any key to exit..."
+      echo
+    fi
+    exit $1
+  fi
+  rm /tmp/download-vid-error.sh
+}
+EOF
+chmod +x /tmp/download-vid-error.sh
+source /tmp/download-vid-error.sh
+
 # Plagiaraized from http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
 function contains() {
   local n=$#
@@ -326,20 +347,24 @@ if [ "$1" != "--terminal" ]; then
   if [ "$1" = "--compatible" ]
   then CMD="$HOME/.dumbscripts/download-vid.sh --terminal --compatible \"$URL\"; cat"
   elif [ "$3" = "--ask" ]; then
-    echo "#!/bin/bash" >/tmp/download-vid-ask.sh
+    cat >/tmp/download-vid-ask.sh <<EOF
+#!/bin/bash
+source /tmp/download-vid-error.sh
+while true; do
+  read -n 1 -p "Download, browser, player, copy link, or quit? [D/B/P/C/Q] " ANS
+  case \$ANS in
+    [dD] ) echo; $CMD; ERROR=\$?; break;;
+    [bB] ) nohup $BROWSER "$URL" >/dev/null & sleep 0.5; disown -r & exit; break;;
+    [pP] ) nohup $PLAYER "$URL" >/dev/null & sleep 0.5; disown -r & exit; break;;
+    [cC] ) echo -n "$URL" | xclip -selection c; sleep 0.5; disown -r & exit; break;;
+    [qQ] ) break;;
+       * ) echo; echo "invalid option"
+  esac
+done
+error_handling \$ERROR "$DOWNLOADER" '$CMD'
+rm /tmp/download-vid-ask.sh
+EOF
     chmod +x /tmp/download-vid-ask.sh
-    echo 'while true; do' | tee -a /tmp/download-vid-ask.sh
-    echo '  read -n 1 -p "Download, browser, player, copy link, or quit? [D/B/P/C/Q] " ANS' | tee -a /tmp/download-vid-ask.sh
-    echo '  case $ANS in' | tee -a /tmp/download-vid-ask.sh
-    echo '    [dD] )' "echo; $CMD; break;;" | tee -a /tmp/download-vid-ask.sh
-    echo '    [bB] )' "nohup $BROWSER \"$URL\" >/dev/null & sleep 0.5; break;;" | tee -a /tmp/download-vid-ask.sh
-    echo '    [pP] )' "nohup $PLAYER \"$URL\" >/dev/null & sleep 0.5; break;;" | tee -a /tmp/download-vid-ask.sh
-    echo '    [cC] )' "echo -n \"$URL\" | xclip -selection c; sleep 0.5; break;;" | tee -a /tmp/download-vid-ask.sh
-    echo '    [qQ] ) break;;' | tee -a /tmp/download-vid-ask.sh
-    echo '       * ) echo "invalid option"' | tee -a /tmp/download-vid-ask.sh
-    echo '  esac' | tee -a /tmp/download-vid-ask.sh
-    echo 'done' | tee -a /tmp/download-vid-ask.sh
-    echo 'rm /tmp/download-vid-ask.sh' | tee -a /tmp/download-vid-ask.sh
     CMD="/tmp/download-vid-ask.sh"
   fi
   CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e \"bash -c '$(echo $CMD)'\""
@@ -349,13 +374,7 @@ eval "$CMD" &
 wait $!
 ERROR=$?
 
-if [ "$ERROR" != 0 ] && [ "$ERROR" != 255 ]; then
-  echo "Something went wrong"
-  if [ "$1" != "--terminal" ]
-  then read -n1 -r -p "Press any key to exit..."
-  fi
-  exit $ERROR
-fi
+error_handling $ERROR "$DOWNLOADER" "$CMD" --terminal
 
 ls --group-directories-first $HOME/Downloads > $HOME/Dropbox/Settings/Scripts/Downloads
 
