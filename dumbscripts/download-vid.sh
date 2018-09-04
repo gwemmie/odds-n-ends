@@ -237,91 +237,35 @@ fi
 # per-site quality params
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
-  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
-    OPT="$OPT -f \"18/43/best[height<=480]\""
-  elif [[ "$URL" =~ "cinemassacre.com" ]] \
-  || [[ "$URL" =~ "channelawesome.com" ]]; then
-    OPT="-f \"480p/best[height<=360]\""
-  elif [[ "$URL" =~ "teamfourstar.com" ]]; then
-    OPT="-f \"dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=360]\""
-  elif [[ "$URL" =~ "vessel.com" ]]; then
-    OPT="-f \"mp4-360-500K/best[height<=360]\""
-  elif [[ "$URL" =~ "dailymotion.com" ]]; then
-    OPT="-f \"http-380/best[height<=380]\""
-  elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f \"hls-meta-0/360p/best[height<=360]\""
-  elif [[ "$URL" =~ "vimeo.com" ]]; then
-    OPT="-f \"http-360p/best[height<=360]\""
-  elif [[ "$URL" =~ "cc.com" ]]; then
-    OPT="-f \"http-1028/1028/best[height<=360]\""
-  elif [[ "$URL" =~ "ted.com" ]]; then
-    OPT="-f \"http-1253/hls-1253/rtmp-600k/best[height<=360]\""
-  elif [[ "$URL" =~ "cwseed.com" ]]; then
-    OPT="-f \"hls-640/640/best[height<=360]\""
-  elif [[ "$URL" =~ "bbc.co.uk" ]]; then
-    OPT="$OPT -f \"best[height<=380]\""
-  elif [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
-    OPT="$OPT -f \"best[height<=380]\""
-  elif [[ "$URL" =~ "vid.me" ]]; then
-    OPT="$OPT -f \"dash-video-avc1-1+dash-audio-und-mp4a-1\""
-  elif [ "$ROOSTER_TEETH" = "true" ]; then
-    OPT="-f \"best[height<=360]\""
+  if [[ "$URL" =~ "crunchyroll.com" ]]; then
+    # to avoid getting subs embedded in video stream
+    OPT="$OPT -f \"best[height<=480][format_id*=jaJP]/best[height<=480]\""
+  elif [[ "$URL" =~ "teamfourstar.com" ]] \
+    || [[ "$URL" =~ "vid.me" ]]; then
+    # have to combine separate video/audio streams that aren't marked properly for youtube-dl to handle automatically
+    OPT="$OPT -f \"dash-video-avc1-1+dash-audio-und-mp4a-1/dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=480]\""
   else
-    echo "WARNING: Unknown website. May not get desired quality."
-    OPT="-f \"best[height<=360]\""
-    # commented out because I was sick of not being able to leave a
-    # batch downloading unattended
-    #read -p "Download anyway? [Y/N] " ANS
-    # case $ANS in
-    #   [nN]* ) exit;;
-    # esac
+    OPT="-f \"best[height<=480]\""
   fi
   QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
+  # wasn't doing anything for some reason
   #sed -i "s/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=$QUALITY/" $HOME/.config/smplayer/smplayer.ini
 elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download medium quality..."
-  if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]]; then
-    OPT="$OPT -f \"720p/best[height<=720]/480p/best[height<=480]\""
-  elif [[ "$URL" =~ "cinemassacre.com" ]] \
-  || [[ "$URL" =~ "channelawesome.com" ]]; then
-    OPT="-f \"720p/best[height<=720]/480p/best[height<=360]\""
-  elif [[ "$URL" =~ "teamfourstar.com" ]]; then
-    OPT="-f \"dash-video-avc1-3+dash-audio-und-mp4a-3/best[height<=720]/dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=360]\""
-  elif [[ "$URL" =~ "vessel.com" ]]; then
-    OPT="-f \"mp4-720-2400K/best[height<=720]/mp4-360-500K/best[height<=360]\""
-  elif [[ "$URL" =~ "dailymotion.com" ]]; then
-    OPT="-f \"http-780/best[height<=780]/http-380/best[height<=380]\""
-  elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f \"hls-meta-2/720p/best[height<=720]/hls-meta-1/480p/hls-meta-0/360p/best[height<=360]\""
-  elif [[ "$URL" =~ "vimeo.com" ]]; then
-    OPT="-f \"http-720p/best[height<=720]/http-360p/best[height<=360]\""
-  elif [[ "$URL" =~ "cc.com" ]]; then
-    OPT="-f \"http-3128/3128/best[height<=720]/http-1028/1028/best[height<=360]\""
-  elif [[ "$URL" =~ "ted.com" ]]; then
-    OPT="-f \"http-3976/hls-3976/rtmp-1500k/best[height<=720]/http-1253/hls-1253/rtmp-600k/best[height<=360]\""
-  elif [[ "$URL" =~ "cwseed.com" ]]; then
-    OPT="-f \"hls-2100/2100/best[height<=720]/hls-640/640/best[height<=360]\""
-  elif [[ "$URL" =~ "bbc.co.uk" ]]; then
-    OPT="$OPT -f \"best[height<=720]\""
-  elif [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
-    OPT="$OPT -f \"best[height<=720]\""
-  elif [[ "$URL" =~ "vid.me" ]]; then
-    OPT="$OPT -f \"dash-video-avc1-3+dash-audio-und-mp4a-1\""
-  elif [ "$ROOSTER_TEETH" = "true" ]; then
-    OPT="-f \"best[height<=720]\""
+  if [[ "$URL" =~ "crunchyroll.com" ]]; then
+    OPT="$OPT -f \"best[height<=720][format_id*=jaJP]/best[height<=720]/best[height<=480][format_id*=jaJP]/best[height<=480]\""
+  elif [[ "$URL" =~ "teamfourstar.com" ]] \
+    || [[ "$URL" =~ "vid.me" ]]; then
+    # have to combine separate video/audio streams that aren't marked properly for youtube-dl to handle automatically
+    OPT="$OPT -f \"dash-video-avc1-3+dash-audio-und-mp4a-1/dash-video-avc1-3+dash-audio-und-mp4a-3/best[height<=720]/dash-video-avc1-1+dash-audio-und-mp4a-1/dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=480]\""
   else
-    echo "WARNING: Unknown website. May not get desired quality."
-    OPT="-f \"best[height<=720]\""
-    # commented out because I was sick of not being able to leave a
-    # batch downloading unattended
-    #read -p "Download anyway? [Y/N] " ANS
-    # case $ANS in
-    #   [nN]* ) exit;;
-    # esac
+    OPT="-f \"best[height<=720]/best[height<=480]\""
   fi
   QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
+  # wasn't doing anything for some reason
   #sed -i "s/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=$QUALITY/" $HOME/.config/smplayer/smplayer.ini
 else
+  # wasn't doing anything for some reason
   #sed -i 's/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=/' $HOME/.config/smplayer/smplayer.ini
   echo "Trying to download high quality..."
 fi
