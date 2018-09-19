@@ -32,6 +32,8 @@ PASSWORD=$(gkeyring --name 'gmail' --keyring login -o secret)
 INTERVAL=600 # half-seconds
 # $CHECKCMD must output email subject and ID, separated by newlines
 # you're welcome to change that--I just set it up that way because it was easiest with parsing a GMail atom feed
+# $TESTCMD is for testing the connection
+TESTCMD="curl -u $USERNAME:$PASSWORD \"https://mail.google.com/mail/feed/atom\""
 CHECKCMD="curl -u $USERNAME:$PASSWORD --silent \"https://mail.google.com/mail/feed/atom\" | grep -oPm1 \"(?<=<title>|<id>)[^<]+\" | grep -vi \"Gmail - Inbox for $USERNAME@$DOMAIN\""
 # yad menu syntax was a really stupid amount of hard to find--wasn't even in their own docs!
 # (at least not clearly)
@@ -161,7 +163,7 @@ while true; do
   else send-command "tooltip:$USERNAME@$DOMAIN - Checking..."
   fi
   # get new emails
-  OUTPUT="$(eval "$CHECKCMD")"
+  OUTPUT="$(eval "$TESTCMD")"
   TEST=$?
   if [ $TEST -ne 0 ]
   then error "$OUTPUT" $TEST # results in exit
