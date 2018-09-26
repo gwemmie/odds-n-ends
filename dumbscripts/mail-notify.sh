@@ -236,13 +236,11 @@ while true; do
   for ((i = 0; i < ${#OUTPUT[@]}; i = i + 2)); do
     SUBJECT="${OUTPUT[$i]}"
     ID="${OUTPUT[$i+1]}"
-    # the -z check was unnecessary and causing crashes because of a stupid bash bug
-    # that I'm gonna have to rewrite this script in python to fix
     if ! messages-contains "$ID"; then
       messages-set "$ID" "$SUBJECT"
       NEWMESSAGES+=( "$SUBJECT" )
-    ##elif [ -z "$ID" ]
-    ##then error "at least one message ID is empty" 1 # results in exit
+    elif [ -z "$ID" ]
+    then error "at least one message ID is empty" 1 # results in exit
     fi
   done
   # check for no-longer-unread messages
