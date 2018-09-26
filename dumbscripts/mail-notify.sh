@@ -75,7 +75,7 @@ function messages-get() {
   then grep -A1 "$ID" "$MAILFILE" | tail -1 | sed 's/^SUBJECT: //'
   else if [ "$1" = "--test" ]
     then return 1
-    else error "tried to get nonexistent message ID or ID is missing subject"
+    else error "tried to get nonexistent message ID or ID is missing subject" 1
     fi
   fi
   return 0
