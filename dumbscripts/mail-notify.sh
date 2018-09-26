@@ -30,11 +30,13 @@ DOMAIN="gmail.com"
 USERNAME="JimiJames.Bove"
 PASSWORD=$(gkeyring --name 'gmail' --keyring login -o secret)
 INTERVAL=600 # half-seconds
-# $CHECKCMD must output email subject and ID, separated by newlines
+RETRY=30 # how many times to retry connecting before giving up
+NOTIFY="false" # whether to send new message subjects to libnotify
+# $CHECKCMD must output email subject and ID, in that order, separated by newlines
 # you're welcome to change that--I just set it up that way because it was easiest with parsing a GMail atom feed
 # $TESTCMD is for testing the connection
-TESTCMD="curl -u $USERNAME:$PASSWORD \"https://mail.google.com/mail/feed/atom\""
-CHECKCMD="curl -u $USERNAME:$PASSWORD --silent \"https://mail.google.com/mail/feed/atom\" | grep -oPm1 \"(?<=<title>|<id>)[^<]+\" | grep -vi \"Gmail - Inbox for $USERNAME@$DOMAIN\""
+TESTCMD="curl -sSu $USERNAME:$PASSWORD \"https://mail.google.com/mail/feed/atom\""
+CHECKCMD="curl -su $USERNAME:$PASSWORD \"https://mail.google.com/mail/feed/atom\" | grep -oPm1 \"(?<=<title>|<id>)[^<]+\" | grep -vi \"Gmail - Inbox for $USERNAME@$DOMAIN\""
 # yad menu syntax was a really stupid amount of hard to find--wasn't even in their own docs!
 # (at least not clearly)
 # it goes "<menu item string>! <menu item command>|<subsequent>|<menu>|<items>..."
@@ -43,13 +45,61 @@ DEFAULTMENU="Check for messages...! $0 recheck"
 DEFAULTMENU+="|Run ${MAILPROG}! $0 launch"
 LOCKFILE="$(dirname $0)/$(basename $0 | sed 's/\.sh//')-lock"
 PIPEFILE="/tmp/$(basename $0 | sed 's/\.sh//')-yad-input"
+MAILFILE="$(dirname $0)/$(basename $0 | sed 's/\.sh//')-messages"
 
 # Temp variables--used by the program and changing per run
-declare -A MESSAGES # key: email ID, value: email subject
 NEWMESSAGES=()
 YADPID=""
 
 # Functions
+function error() {
+  ERROR="ERROR: $1"
+  echo "$(basename $0): $ERROR"
+  notify-send -a "$(basename $0)" "$(basename $0)" "$ERROR"
+  stop
+  exit $2
+}
+function messages-set() {
+  ID="$1"
+  SUBJECT="$2"
+  echo "ID: $ID" >> "$MAILFILE"
+  echo "SUBJECT: $SUBJECT" >> "$MAILFILE"
+}
+function messages-get() {
+  ID="$1"
+  if [ "$1" = "--test" ]
+  then ID="$2"
+  fi
+  if grep -q "$ID" "$MAILFILE" 2>/dev/null \
+  && grep -A1 "$ID" "$MAILFILE" 2>/dev/null | grep -qx 'SUBJECT: .*' 2>/dev/null
+  then grep -A1 "$ID" "$MAILFILE" | tail -1 | sed 's/^SUBJECT: //'
+  else if [ "$1" = "--test" ]
+    then return 1
+    else error "tried to get nonexistent message ID or ID is missing subject"
+    fi
+  fi
+  return 0
+}
+function messages-contains() {
+  if messages-get --test "$1" >/dev/null
+  then return 0
+  else return 1
+  fi
+}
+function messages-unset() {
+  if messages-contains "$1"; then
+    ID_LINE="$(grep "$1" "$MAILFILE")"
+    SUBJECT_LINE="$(grep -A1 "$1" "$MAILFILE" | tail -1 | sed 's/^SUBJECT: //')"
+    sed -i "/$ID_LINE/d" "$MAILFILE"
+    sed -i "/$SUBJECT_LINE/d" "$MAILFILE"
+  fi
+}
+function messages-get-all { # prints all IDs
+  grep -x 'ID: .*' "$MAILFILE" | sed 's/^ID: //'
+}
+function messages-length {
+  messages-get-all | wc -l
+}
 function send-command() {
   echo -e "$@\n" > "$PIPEFILE"
 }
@@ -62,21 +112,26 @@ function set-unread() {
   send-command "icon:$UNREADICON"
   send-command "tooltip:$USERNAME@$DOMAIN - $1 new messages"
   MENU="$DEFAULTMENU|-"
-  for ID in "${!MESSAGES[@]}"; do
-    MENU+="|${MESSAGES["$ID"]}"
+  SAVEIFS=$IFS
+  IFS=$(echo -en "\n\b")
+  for ID in $(messages-get-all)
+  do MENU+="|$(messages-get "$ID")"
   done
+  IFS=$SAVEIFS
   send-command "menu:$MENU"
 }
 function stop {
-  if ps $YADPID; then
+  if ps $YADPID >/dev/null; then
     send-command "quit"
     wait $YADPID
   fi
+  rm "$MAILFILE"
   rm "$PIPEFILE"
   rm "$LOCKFILE"
 }
 function start {
   touch "$LOCKFILE"
+  > "$MAILFILE"
   mkfifo "$PIPEFILE"
   tail -f "$PIPEFILE" | yad --notification --text="$USERNAME@$DOMAIN" --command="$0 launch" --image="$ICON" --listen 2>/dev/null &
   YADPID=$!
@@ -84,8 +139,6 @@ function start {
 }
 function reset { # AKA mark current messages as read until next check
   stop
-  unset MESSAGES
-  declare -A MESSAGES
   NEWMESSAGES=()
   YADPID=""
   start
@@ -97,27 +150,35 @@ function poll {
     if ! [ -e "$LOCKFILE" ]; then
       stop
       disown -r && exit
-    elif ! ps $YADPID; then
+    elif ! ps $YADPID >/dev/null; then
       stop
       disown -r && exit
     elif [ "$(<"$LOCKFILE")" = "reset" ]; then
-      > "$LOCKFILE" # clear file
+      > "$LOCKFILE"
+      > "$MAILFILE"
       COUNTER=0
       reset
     elif [ "$(<"$LOCKFILE")" = "recheck" ]; then
-      > "$LOCKFILE" # clear file
+      > "$LOCKFILE"
       break;
     fi
     sleep 0.5
     let COUNTER+=1
   done
 }
-function error() {
-  ERROR="ERROR: $1"
-  echo "$(basename $0): $ERROR"
-  notify-send -a "$(basename $0)" "$(basename $0)" "$ERROR"
-  stop
-  exit $2
+function test-connection {
+  OUTPUT=""
+  TEST=1
+  COUNTER=0
+  while [ $COUNTER -lt $RETRY ]; do
+    OUTPUT="$(eval "$TESTCMD" >/dev/null)"
+    TEST=$?
+    if [ $TEST -ne 0 ]
+    then let COUNTER+=1
+    else return 0
+    fi
+  done
+  error "$OUTPUT" $TEST # results in exit
 }
 # Plagiaraized from http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
 function contains() {
@@ -149,7 +210,7 @@ elif [ "$1" = "recheck" ]; then
 elif [ "$1" = "exit" ]; then
   rm "$LOCKFILE"
   disown -r && exit
-elif pgrep "$(basename $0)" | grep -v $$; then
+elif pgrep "$(basename $0)" | grep -v $$ >/dev/null; then
   echo "$(basename $0): already running"
   exit 1
 else start
@@ -158,48 +219,49 @@ fi
 # Check mail forever
 while true; do
   # print status
-  if [ ${#MESSAGES[@]} -gt 0 ]
-  then send-command "tooltip:$USERNAME@$DOMAIN - ${#MESSAGES[@]} new messages - Checking..."
+  if [ $(messages-length) -gt 0 ]
+  then send-command "tooltip:$USERNAME@$DOMAIN - $(messages-length) new messages - Checking..."
   else send-command "tooltip:$USERNAME@$DOMAIN - Checking..."
   fi
   # get new emails
-  OUTPUT="$(eval "$TESTCMD")"
-  TEST=$?
-  if [ $TEST -ne 0 ]
-  then error "$OUTPUT" $TEST # results in exit
-  fi
+  test-connection
   OUTPUT=()
   SAVEIFS=$IFS
   IFS=$(echo -en "\n\b")
   for LINE in $(eval "$CHECKCMD")
-  do OUTPUT+=( " $LINE " )
+  do OUTPUT+=( "$LINE" )
   done
   IFS=$SAVEIFS
   # parse new emails into hash
   for ((i = 0; i < ${#OUTPUT[@]}; i = i + 2)); do
     SUBJECT="${OUTPUT[$i]}"
     ID="${OUTPUT[$i+1]}"
-    if ! [ -z "$ID" ] && ! [ ${MESSAGES["$ID"]+_} ]; then
-      MESSAGES["$ID"]="$SUBJECT"
+    # the -z check was unnecessary and causing crashes because of a stupid bash bug
+    # that I'm gonna have to rewrite this script in python to fix
+    if ! messages-contains "$ID"; then
+      messages-set "$ID" "$SUBJECT"
       NEWMESSAGES+=( "$SUBJECT" )
-    elif [ -z "$ID" ]
-    then error "at least one message ID is empty" 1 # results in exit
+    ##elif [ -z "$ID" ]
+    ##then error "at least one message ID is empty" 1 # results in exit
     fi
   done
   # check for no-longer-unread messages
-  for ID in "${!MESSAGES[@]}"; do if [ "$(contains "${OUTPUT[@]}" "$ID")" = "n" ]
-  then unset MESSAGES["$ID"]
+  SAVEIFS=$IFS
+  IFS=$(echo -en "\n\b")
+  for ID in $(messages-get-all); do if [ "$(contains "${OUTPUT[@]}" "$ID")" = "n" ]
+  then messages-unset "$ID"
   fi; done
+  IFS=$SAVEIFS
   # update tray icon
-  if [ ${#MESSAGES[@]} -gt 0 ]
-  then set-unread ${#MESSAGES[@]}
+  if [ $(messages-length) -gt 0 ]
+  then set-unread $(messages-length)
   else set-read
   fi
   # send notifications
-  for MESSAGE in "${NEWMESSAGES[@]}"; do
+  if [ "$NOTIFY" = "true" ]; then for MESSAGE in "${NEWMESSAGES[@]}"; do
     notify-send -i "$UNREADICON" -a "$(basename $0)" "$USERNAME@$DOMAIN" "$MESSAGE"
     sleep 1 # so xfce4-notifyd can keep up
-  done
+  done; fi
   NEWMESSAGES=()
   poll
 done
