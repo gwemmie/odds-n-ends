@@ -301,7 +301,7 @@ while true; do
     [bB] ) nohup $BROWSER "$URL" >/dev/null & sleep 0.5; disown -r & exit; break;;
     [pP] ) nohup $PLAYER "$URL" >/dev/null & sleep 0.5; disown -r & exit; break;;
     [cC] ) echo -n "$URL" | xclip -selection c; sleep 0.5; disown -r & exit; break;;
-    [qQ] ) break;;
+    [qQ] ) disown -r & exit; break;;
        * ) echo; echo "invalid option"
   esac
 done
@@ -330,6 +330,6 @@ elif [[ "$URL" =~ "bbc.co.uk" ]]; then
 fi
 
 # my own script to automate some folder management with downloaded videos
-$HOME/.dumbscripts/update-downloads.sh & disown
+$HOME/.dumbscripts/update-downloads.sh >/dev/null 2>&1 & disown
 
 disown -r && exit

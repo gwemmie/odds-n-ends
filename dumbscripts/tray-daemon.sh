@@ -21,8 +21,14 @@ if ! hash yad 2>/dev/null; then
 fi
 
 while true; do
-  for SCRIPT in "${SCRIPTS[@]}"; do if ! pgrep "$SCRIPT.sh"; then
+  for SCRIPT in "${SCRIPTS[@]}"; do if ! pgrep -fl "$SCRIPT.sh" | grep -v yad; then
     if ! [ ${YADPIDS["$SCRIPT"]+_} ]; then
+      # make sure original tray icon is gone
+      BADTRAY=$(pgrep -fl "$SCRIPT.sh" | grep yad | sed 's/ yad//')
+      if ! [ -z "$BADTRAY" ]
+      then kill $BADTRAY
+      fi
+      # start error tray icon
       ICON="$(grep "ICON=" "$LOCATION/$SCRIPT.sh" | head -1 | sed 's/.*ICON="//' | sed 's/".*//')-x"
       yad --notification --text="$SCRIPT is broken, click to restart" --command="$LOCATION/$SCRIPT.sh" --image="$ICON" 2>/dev/null &
       YADPIDS["$SCRIPT"]=$!

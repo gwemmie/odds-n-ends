@@ -37,6 +37,7 @@ else
     fi
   else
     #pkill -f 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py'
+    sleep 0.1
     quodlibet --play-pause & disown
   fi
 fi
