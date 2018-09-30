@@ -15,7 +15,7 @@ fi
 sudo cp -n $BACKUP/pkg/$(hostname)/*.tar.xz /var/cache/pacman/pkg/
 # start with packages that hate --noconfirm (because they're a choice)
 # for KDE/Plasma, add phonon-qt5-backend
-sudo pacman -Sy libgl lib32-libgl gcc-multilib gcc-libs-multilib ttf-font
+sudo pacman -Sy libglvnd lib32-libglvnd ttf-font
 # do AUR packages first since yaourt won't check cache
 for i in $(<$BACKUP/pkg/$(hostname)/aur); do
   FILE="$(ls /var/cache/pacman/pkg/$i* | grep -P "$i-([0-9]|r[0-9]|latest)")"
