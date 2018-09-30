@@ -22,9 +22,10 @@ don't want to know how many times I've needed that.
 The referenced "FINAL FILE" is not included in this git repo, because it
 includes secure/private info that would help you hack into my computers
 and does not provide any info that isn't easy to Google for.
-(In case you're curious "steamos" is an Arch virtual machine that I use
-for AAA Linux games, because Linux is not yet capable of using the same
-NVidia video card for a Windows VM AND the host computer without a
-reboot if you, like me, have another NVidia card for the host graphics
-instead of Intel graphics. It can, however, use the same card for
-another VM--a Linux VM.)
+
+(In case you're curious, "steamos" was an Arch virtual machine that I
+used for AAA Linux games, because Linux was not capable of using the
+same NVidia video card for a Windows VM AND the host computer without a
+reboot if you, like me before I switched to AMD, have another NVidia
+card for the host graphics instead of Intel graphics. It can, however,
+use the same card for another VM--a Linux VM.)
