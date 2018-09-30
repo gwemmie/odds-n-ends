@@ -22,6 +22,11 @@ don't want to know how many times I've needed that.
 The referenced "FINAL FILE" is not included in this git repo, because it
 includes secure/private info that would help you hack into my computers
 and does not provide any info that isn't easy to Google for.
+DO NOT treat the conf files in install-script.sh as a comprehensive set
+of everything you'd have to worry about. I still update that file every
+time I change my system, but since that doesn't affect the general form
+the script follows that you can use as a guideline, I don't bother
+updating the copy here.
 
 (In case you're curious, "steamos" was an Arch virtual machine that I
 used for AAA Linux games, because Linux was not capable of using the
