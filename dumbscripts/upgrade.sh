@@ -1,84 +1,82 @@
 #!/bin/bash
-# HELLO TEMPLATE. This script is EXTREMELY personalized to me. It
-# upgrades... everything. Yes, everything. That's why it's still a very
-# valuable template. Have fun. I use Arch Linux, so that's where it'll
-# help the most.
+BACKUP=$HOME/Backup/Computers/Linux
+PKG=$BACKUP/pkg/$(hostname)
+INFO=$HOME/Dropbox/Settings/Scripts
+ROUTER=$(sed -n 1p $INFO/ROUTER) # hostname of main computer & router
+ROUTERIP=$(sed -n 1p $INFO/$ROUTER.info) # IP of main computer & router
+NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
+UPGRADE_STEAM=false
 
-PKG=$HOME/Backup/Computers/Linux/pkg/$(hostname)
+# packages we don't want the package manager to update (at least not automatically)
+SPLITP=( linux-rt-lts-docs linux-rt-lts-headers citra-qt-git libc++abi libc++experimental )
+MANUAL=( zyn-fusion qjackctl )
+BADVER=( xfce4-sensors-plugin )
+IGNORE="${SPLITP[@]/#/--ignore } ${MANUAL[@]/#/--ignore } ${BADVER[@]/#/--ignore }"
 
-# things I don't want the script to redo every time it's run, so I limit
-# them to once a day with a .updated file
-if test "`find $HOME/.updated -mtime +1`";
-then
+cache-upgrade() {
+  FILE="$(ls /var/cache/pacman/pkg/$1* | grep -P "$1-([0-9]|r[0-9]|latest)" | tail -1)"
+  # can't have this function universally fail to upgrade a package named downgrade
+  if [[ "$FILE" =~ "downgrad" ]] \
+  || ! [[ "$(echo -e "n\n" | sudo pacman -U $FILE 2>&1)" =~ "downgrad" ]]
+  then sudo pacman -U --noconfirm --needed $FILE
+  fi
+}
 
-# update mirror
-sudo echo -n "Updating mirrorlist... "
-touch $HOME/.updated
-sudo reflector --country 'United States' -l 200 --sort rate --save /etc/pacman.d/mirrorlist
-echo $?
+while true; do
+  read -n 1 -p "Skip kernel upgrade to avoid reboot? [Y/n] " ANS
+  case $ANS in
+    [Nn] ) echo; break;;
+       * ) echo; IGNORE="$IGNORE --ignore linux --ignore linux-lts"; break;;
+  esac
+done
 
-# update steam games
-ls -1 $HOME/.local/share/Steam/SteamApps/ | grep appmanifest | sed -r 's/appmanifest_([0-9]+).acf/\1/' > /tmp/steam-update
-sed -i 's/^/app_update /' /tmp/steam-update
-sed -i '1ilogin leo_garth 1mmAdgrr' /tmp/steam-update
-echo quit >> /tmp/steam-update
-steamcmd +runscript /tmp/steam-update
-rm /tmp/steam-update
-
-# update other games
-WINEARCH=win64 WINEPREFIX="$HOME/.local/share/wineprefixes/StarCraft II" wine "$HOME/.local/share/wineprefixes/StarCraft II/drive_c/Program Files/Battle.net/Battle.net Launcher.exe" 1>/dev/null 2>/dev/null &
-
+# preliminary stuff
+if ! [ -f $HOME/.updated ] || test "`find $HOME/.updated -mtime +1`"; then
+  UPGRADE_STEAM=true
+  # update mirror
+  sudo echo # to get the password prompt out of the way
+  echo -n "Updating mirrorlist... "
+  sudo reflector --country 'United States' -l 200 --sort rate --save /etc/pacman.d/mirrorlist
+  echo $?
+  # copy already-updated cache
+  if [ "$(hostname)" != "$ROUTER" ]; then
+    echo "Copying cache from $ROUTER..."
+    SAVEIFS=$IFS
+    IFS=$(echo -en "\n\b")
+    for i in $(ls $BACKUP/pkg/$ROUTER/*.tar.xz)
+    do sudo cp "$i" /var/cache/pacman/pkg/
+    done
+    IFS=$SAVEIFS
+  fi
+  touch $HOME/.updated
 fi
 
 # update packages
-yaourt -Syu --ignore firefox # I'm always careful with firefox updates
-sudo chmod 777 /var/cache/pacman/pkg
-PKGDEST=/var/cache/pacman/pkg pacaur --noedit -Sua
-sudo chmod 775 /var/cache/pacman/pkg
-sudo chown root:root /var/cache/pacman/pkg/*.tar.xz
-yaourt -Qtd # uninstall build-deps no longer needed
-yaourt -Sc # clear package cache of not-installed package files
-yaourt -C # check .pacnew config files
-echo -n "Backing cache up to home folder... "
-yaourt -Qqe > $PKG/list
-yaourt -Qqd > $PKG/deps
-rsync -rt --delete /var/cache/pacman/pkg/ $PKG/
-echo $? # just so I know how that rsync went
-
-# update gits
-cd $HOME/.local/share/git
-SAVEIFS=$IFS
-IFS=$(echo -en "\n\b")
-for i in $(ls .)
-do
-  cd "$i"
-  echo "Updating $i..."
-  git remote update
-
-  LOCAL=$(git rev-parse @)
-  REMOTE=$(git rev-parse @{u})
-  BASE=$(git merge-base @ @{u})
-
-  if [ $LOCAL = $REMOTE ]; then
-    echo "Up-to-date"
-  elif [ $LOCAL = $BASE ]; then
-    echo "Need to pull"
-    git pull
-    if [ "$i" = "punk" ]; then
-      npm install
-      npm run build
-      npm run watch
-    elif [ "$i" = "texttop" ]; then
-      sudo docker build -t texttop ./
-    fi
-  elif [ $REMOTE = $BASE ]; then
-    echo "Need to push"
-    git push
-  else
-    echo "Diverged"
-  fi
-
-  cd ..
+echo "Upgrading manual packages:"
+echo ${MANUAL[@]}
+for pkg in ${MANUAL[@]}
+do cache-upgrade $pkg
 done
-IFS=$SAVEIFS
-cd
+echo "AUR packages to upgrade:"
+echo n | eval "yaourt -Su --aur $IGNORE" 2>/dev/null | grep "aur/" | perl -0777 -pe 's/.*\r//g' | sed 's|aur/||'
+echo "Official packages to upgrade:"
+eval "yaourt -Syu $IGNORE"
+echo "Upgrading AUR..."
+for i in $(echo n | eval "yaourt -Su --aur $IGNORE" 2>/dev/null | grep "aur/" | perl -0777 -pe 's/.*\r//g' | sed 's|aur/||')
+do cache-upgrade $i
+done
+eval "yaourt -Su --aur --noconfirm $IGNORE"
+
+# unwanted files from certain package upgrades
+if [ -f $HOME/.config/autostart/dropbox.desktop ]; then
+  sudo rm $HOME/.config/autostart/dropbox.desktop
+fi
+rmdir $HOME/Unity-*
+
+$HOME/.upgrade-cache.sh
+
+$HOME/.upgrade-git.sh
+
+if [ "$UPGRADE_STEAM" = "true" ]
+then $HOME/.upgrade-steam.sh
+fi
