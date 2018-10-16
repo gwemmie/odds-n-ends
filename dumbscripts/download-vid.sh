@@ -100,8 +100,7 @@ else
   fi
 fi
 if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
-|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbc.co.uk" ]] \
-|| [[ "$URL" =~ "bbcamerica.com" ]]
+|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]]
 then DEST="$HOME/Downloads/Ongoing TV/$FOLDER"
 else DEST="$HOME/Downloads/$FOLDER"
 fi
