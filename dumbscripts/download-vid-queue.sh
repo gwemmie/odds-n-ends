@@ -4,6 +4,7 @@
 # Order is FIFO; each line of $PIDFILE is a PID
 ERROR=0
 PIDFILE=/tmp/queue-dl
+GITS=$HOME/.local/share/git # where you store your custom git repos
 
 # Plagiarized from http://stackoverflow.com/questions/1058047/wait-for-any-process-to-finish
 function anywait {
@@ -39,7 +40,10 @@ if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
 else echo $$ > "$PIDFILE"
 fi
 if [ "$1" != "nothing" ]; then
-  youtube-dl "$@"
+  if [ "$i" = "--branch" ]
+  then $GITS/youtube-dl-$2 "${@:3}"
+  else youtube-dl "$@"
+  fi
   ERROR=$?
 fi
 sed -i "/^$$\$/d" "$PIDFILE"
