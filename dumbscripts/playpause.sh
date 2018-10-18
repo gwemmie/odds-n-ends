@@ -12,7 +12,7 @@
 set -x
 
 WINDOW="$(xdotool getwindowname $(xdotool getactivewindow))"
-if [[ "$WINDOW" =~ "plugin-container" ]] | [[ "$WINDOW" =~ "VLC media player" ]] | [[ "$WINDOW" =~ "SMPlayer" ]]; then
+if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] || [[ "$WINDOW" =~ "SMPlayer" ]]; then
   sleep 0.1
   xdotool key space
 elif [ -f $HOME/.dumbscripts/random ]; then

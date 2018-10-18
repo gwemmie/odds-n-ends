@@ -21,6 +21,9 @@
 # So, finally after spending all day breaking down from desperation, I learned about yad and
 # GMail's atom feed and made my own dang mail notify program, with blackjack (BASH), and hookers
 # (hashes)
+# As of 10/8/18, now also checks your RSS using your reader's unread count and the last time
+# it ran (requires rsstail). The process is currently extremely slow, so I added a 2nd menu
+# option for checking *just* email. I'm not sure how to make it faster
 
 # Config variables--change these to fit your needs
 MAILPROG=thunderbird
@@ -32,6 +35,7 @@ PASSWORD=$(gkeyring --name 'gmail' --keyring login -o secret)
 INTERVAL=600 # half-seconds
 RETRY=30 # how many times to retry connecting before giving up
 NOTIFY="false" # whether to send new message subjects to libnotify
+RSS="false" # whether to check for new RSS items
 # $CHECKCMD must output email subject and ID, in that order, separated by newlines
 # you're welcome to change that--I just set it up that way because it was easiest with parsing a GMail atom feed
 # $TESTCMD is for testing the connection
@@ -42,12 +46,39 @@ CHECKCMD="curl -su $USERNAME:$PASSWORD \"https://mail.google.com/mail/feed/atom\
 # it goes "<menu item string>! <menu item command>|<subsequent>|<menu>|<items>..."
 # at least their docs say how to change the ! and | to different characters if you prefer
 DEFAULTMENU="Check for messages...! $0 recheck"
+if [ "$RSS" != "false" ]
+then DEFAULTMENU+="|Check for messages & RSS (slower)...! $0 recheck-all"
+fi
 DEFAULTMENU+="|Run ${MAILPROG}! $0 launch"
 LOCKFILE="$(dirname $0)/$(basename $0 | sed 's/\.sh//')-lock"
 PIPEFILE="/tmp/$(basename $0 | sed 's/\.sh//')-yad-input"
 MAILFILE="$(dirname $0)/$(basename $0 | sed 's/\.sh//')-messages"
 
+# Config variables/functions that are dependent on which mail/RSS program(s) you run--currently assuming thunderbird--and where its configs are stored, so you will definitely have to edit them
+# WARNING: At least in thunderbird's case, a massive amount of this code requires that none of
+# the folder or file names have spaces. That means that even the folders you have feeds stored in
+# in your RSS account must have no spaces. Oh, and of course, you have to be using maildir rather
+# than mbox
+FEEDLIST="$(cat "$HOME/Backup/Cloud/RSS Subs.opml" | grep -oP "(?<=xmlUrl=\")[^\"]+")"
+THUNDERBIRD_RSS_FOLDER="$HOME/.thunderbird/4volak1b.default/Mail/Feeds-4"
+function last-run { # returns date in seconds
+  MOST_RECENT=0
+  for FILE in "$(ls -d $THUNDERBIRD_RSS_FOLDER/*.msf 2>/dev/null | grep -v Trash)"
+  do if [ $(date -r $FILE +%s) -gt $MOST_RECENT ]
+  then MOST_RECENT=$(date -r $FILE +%s)
+  fi; done
+  echo $MOST_RECENT
+}
+function last-unread { # returns amount of unread items left unread in last run
+  COUNT=0
+  for FOLDER in "$(ls -d $THUNDERBIRD_RSS_FOLDER/*/ 2>/dev/null | grep -v Trash)"
+  do let COUNT+=$(ls -1 "${FOLDER}cur/" 2>/dev/null | wc -l)
+  done
+  echo $COUNT
+}
+
 # Temp variables--used by the program and changing per run
+RSSMENU="0 new RSS items"
 NEWMESSAGES=()
 YADPID=""
 
@@ -106,12 +137,20 @@ function send-command() {
 function set-read {
   send-command "icon:$ICON"
   send-command "tooltip:$USERNAME@$DOMAIN - no new messages"
-  send-command "menu:$DEFAULTMENU"
+  MENU="$DEFAULTMENU"
+  if [ "$RSS" != "false" ]
+  then MENU+="|$RSSMENU"
+  fi
+  send-command "menu:$MENU"
 }
 function set-unread() {
   send-command "icon:$UNREADICON"
   send-command "tooltip:$USERNAME@$DOMAIN - $1 new messages"
-  MENU="$DEFAULTMENU|-"
+  MENU="$DEFAULTMENU"
+  if [ "$RSS" != "false" ]
+  then MENU+="|$RSSMENU"
+  fi
+  MENU+="|-"
   SAVEIFS=$IFS
   IFS=$(echo -en "\n\b")
   for ID in $(messages-get-all)
@@ -158,7 +197,13 @@ function poll {
       > "$MAILFILE"
       COUNTER=0
       reset
+    elif [ "$(<"$LOCKFILE")" = "recheck-all" ]; then
+      > "$LOCKFILE"
+      break;
     elif [ "$(<"$LOCKFILE")" = "recheck" ]; then
+      if [ "$RSS" != "false" ]
+      then RSS="skip"
+      fi
       > "$LOCKFILE"
       break;
     fi
@@ -207,6 +252,9 @@ if [ "$1" = "launch" ]; then
 elif [ "$1" = "recheck" ]; then
   echo "recheck" > "$LOCKFILE"
   disown -r && exit
+elif [ "$1" = "recheck-all" ]; then
+  echo "recheck-all" > "$LOCKFILE"
+  disown -r && exit
 elif [ "$1" = "exit" ]; then
   rm "$LOCKFILE"
   disown -r && exit
@@ -250,6 +298,26 @@ while true; do
   then messages-unset "$ID"
   fi; done
   IFS=$SAVEIFS
+  # check for new RSS items
+  if [ "$RSS" = "true" ] && hash rsstail 2>/dev/null; then
+    LAST_TIME=$(last-run)
+    COUNT=$(last-unread)
+    for FEED in $FEEDLIST; do
+      SAVEIFS=$IFS
+      IFS=$(echo -en "\n\b")
+      for LINE in $(rsstail -1p -u "$FEED" 2>/dev/null | grep -x 'Pub.date: .*' | sed 's/^Pub\.date: //'); do
+        if ! date -d "$LINE" # bad date; yes some feeds actually give incomplete date strings!
+        then continue
+        elif [ $(date -d "$LINE" +%s) -gt $LAST_TIME ]
+        then let COUNT+=1
+        fi
+      done
+      IFS=$SAVEIFS
+    done
+    RSSMENU="$COUNT new RSS items"
+  elif [ "$RSS" = "skip" ]
+  then RSS="true"
+  fi
   # update tray icon
   if [ $(messages-length) -gt 0 ]
   then set-unread $(messages-length)

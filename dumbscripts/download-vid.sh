@@ -58,12 +58,15 @@
 
 # If you, like my brother, have a crippling monthly bandwidth limit, you
 # can put the MAC address of your router in $LOWBAND to automatically
-# download videos in 360p when you're home, and go for HD otherwise.
+# download videos in 480p when you're home, and go for HD otherwise.
 # That feature requires my mac-address.sh script and arping (from the
 # package iputils) to be automatic. Otherwise, you can modify the script
-# to just always download in 360p.
-# Supported sites for automatic 360p are in that if-statement.
+# to just always download in 480p.
+# Supported sites for automatic 480p are in that if-statement.
 # Also can do automatic 720p with MEDBAND.
+# Here's a list of sites in which I made LOWBAND point to 720p instead,
+# because the sound quality of 480p was bad:
+# bbcamerica.com
 
 # Another new feature: Dish provider login support, via a branch that
 # isn't merged yet. It isn't merged because it doesn't work on plenty of
