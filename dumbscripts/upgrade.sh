@@ -15,7 +15,11 @@ NOTNOW=( unity-editor ) # huge packages that update (and redownload) *all the ti
 IGNORE="${SPLITP[@]/#/--ignore } ${MANUAL[@]/#/--ignore } ${BADVER[@]/#/--ignore } ${NOTNOW[@]/#/--ignore }"
 
 cache-upgrade() {
-  FILE="$(ls /var/cache/pacman/pkg/$1* | grep -P "$1-([0-9]|r[0-9]|latest)" | tail -1)"
+  PKG=$1
+  if [[ "$PKG" =~ "+" ]] # quick fix for libc++
+  then PKG="$(echo $PKG | sed 's/\+/\\\+/g')"
+  fi
+  FILE="$(ls /var/cache/pacman/pkg/$PKG* | grep -P "$PKG-([0-9]|c[0-9]|r[0-9]|v[0-9]|latest)" | tail -1)"
   # can't have this function universally fail to upgrade a package named downgrade
   if [[ "$FILE" =~ "downgrad" ]] \
   || ! [[ "$(echo -e "n\n" | sudo pacman -U $FILE 2>&1)" =~ "downgrad" ]]
