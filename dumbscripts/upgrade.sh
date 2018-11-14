@@ -11,7 +11,8 @@ UPGRADE_STEAM=false
 SPLITP=( linux-rt-lts-docs linux-rt-lts-headers citra-qt-git libc++abi libc++experimental )
 MANUAL=( zyn-fusion qjackctl )
 BADVER=( xfce4-sensors-plugin )
-IGNORE="${SPLITP[@]/#/--ignore } ${MANUAL[@]/#/--ignore } ${BADVER[@]/#/--ignore }"
+NOTNOW=( unity-editor ) # huge packages that update (and redownload) *all the time* to the point that it's just not worth it unless you're currently using that program all the time
+IGNORE="${SPLITP[@]/#/--ignore } ${MANUAL[@]/#/--ignore } ${BADVER[@]/#/--ignore } ${NOTNOW[@]/#/--ignore }"
 
 cache-upgrade() {
   FILE="$(ls /var/cache/pacman/pkg/$1* | grep -P "$1-([0-9]|r[0-9]|latest)" | tail -1)"
@@ -21,6 +22,8 @@ cache-upgrade() {
   then sudo pacman -U --noconfirm --needed $FILE
   fi
 }
+
+echo "REMINDER: currently in NOTNOW: ${NOTNOW[@]}"
 
 while true; do
   read -n 1 -p "Skip kernel upgrade to avoid reboot? [Y/n] " ANS
@@ -57,21 +60,14 @@ echo ${MANUAL[@]}
 for pkg in ${MANUAL[@]}
 do cache-upgrade $pkg
 done
-echo "AUR packages to upgrade:"
-echo n | eval "yaourt -Su --aur $IGNORE" 2>/dev/null | grep "aur/" | perl -0777 -pe 's/.*\r//g' | sed 's|aur/||'
-echo "Official packages to upgrade:"
-eval "yaourt -Syu $IGNORE"
-echo "Upgrading AUR..."
-for i in $(echo n | eval "yaourt -Su --aur $IGNORE" 2>/dev/null | grep "aur/" | perl -0777 -pe 's/.*\r//g' | sed 's|aur/||')
-do cache-upgrade $i
-done
-eval "yaourt -Su --aur --noconfirm $IGNORE"
+echo "Upgrading system..."
+eval "yay -Syu $IGNORE"
 
-# unwanted files from certain package upgrades
+# remove unwanted files from certain package upgrades
 if [ -f $HOME/.config/autostart/dropbox.desktop ]; then
   sudo rm $HOME/.config/autostart/dropbox.desktop
 fi
-rmdir $HOME/Unity-*
+rmdir $HOME/Unity-* 2>&1 | grep -v 'No such file or directory'
 
 $HOME/.upgrade-cache.sh
 
