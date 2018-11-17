@@ -68,7 +68,7 @@ echo "$1" > "$OPENED"
 BROWSER="$HOME/.dumbscripts/firefox.sh default"
 VIDEO1=$HOME/.dumbscripts/download-vid.sh
 VIDEO2="./ --ask"
-HANGOUTS="google-chrome-stable --app="
+CHROME="google-chrome-stable --app="
 INFO=$HOME/Dropbox/Settings/Scripts
 ROUTERUSER=jimi # your username
 ROUTER=$(sed -n 1p $INFO/$(sed -n 1p $INFO/ROUTER).info) # IP of main computer & router
@@ -76,7 +76,7 @@ NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
-CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $1 &"
+CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $@ &"
 LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's_\(http.*://\(en\.\)\?\)\(mobile\|m\)\._\1_' | sed 's/&source=gmail.*//' | sed 's/&sa=.*\(&\|\?\|$\)//' | sed 's/&h=.*\(&\|\?\|$\)//')"
 # to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website (now commented out because I no longer use Rambox)
 # | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//'
@@ -93,12 +93,19 @@ declare -A MEDIA=([".mp3"]=$AUDIO  [".m4a"]=$AUDIO  [".ogg"]=$AUDIO \
                   [".alac"]=$VIDEO [".webm"]=$VIDEO [".mp4"]=$VIDEO \
                   [".mkv"]=$VIDEO  [".flv"]=$VIDEO  [".avi"]=$VIDEO \
                   [".jpg"]=$IMAGE  [".jpeg"]=$IMAGE [".png"]=$IMAGE \
-                  [".gif"]=$IMAGE  [".torrent"]=$TORRENT)
+                  [".gif"]=$IMAGE  [".torrent"]=$TORRENT [".webp"]=$CHROME)
 
 # Check for remote use mode: "if computer is not at home" (heh)
 #if [ $(hostname) != $(sed -n 1p $INFO/ROUTER) ] && [ $COMPUTER != $AT_HOME ]
 #then something
 #fi
+
+# Weird quirk: virt-manager from libvirt will open https://libvirt.org/schemas/domain/qemu/1.0
+# when it launches if you set that as the namespace of a machine (to enable qemu:commandline)
+# The page gives a 404 anyway so, no reason to ever browse to it.
+if [ "$LINK" = "https://libvirt.org/schemas/domain/qemu/1.0" ]
+then exit
+fi
 
 # Check if string contains a defined media extension after its last /
 function MEDIA-contains() {
@@ -141,7 +148,7 @@ function open-link() {
   if [ "$EXT" = "" ]; then
     if [[ "$LINK" =~ "https://hangouts.google.com/call/" ]] \
     || [[ "$LINK" =~ "https://hangouts.google.com/el/CONVERSATION" ]]
-    then CMD="$HANGOUTS$CMD"
+    then CMD="$CHROME$CMD"
     elif video-dl --compatible "$LINK"
     then CMD="$VIDEO1 $CMD $VIDEO2"
     else CMD="$BROWSER $CMD"
@@ -163,7 +170,8 @@ while [ -f "$LOCK" ] && kill -0 $(<"$LOCK"); do sleep 0.2; done
 echo $$ | tee "$LOCK"
 # Routing logic & actual execution
 if [ $(hostname) = "$(sed -n 1p $INFO/ROUTER)" ]; then
-  if [[ $(lsusb | grep Logitech) =~ "Mouse" ]]; then
+  if [[ $(lsusb | grep Logitech) =~ "Mouse" ]] \
+  || [[ $(lsusb | grep Logitech) =~ "Unifying Receiver" ]]; then
     open-link
   else
     open-link return

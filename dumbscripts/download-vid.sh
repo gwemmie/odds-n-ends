@@ -102,15 +102,19 @@ else
   else EXOPT="${@:3}"
   fi
 fi
+# we will soon lose track of exactly what the roosterteeth.com URL is, so we have to keep track a simpler way when it comes to later options
+ROOSTER_TEETH="false"
 if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
 || [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]]
 then DEST="$HOME/Downloads/Ongoing TV/$FOLDER"
+elif [[ "$URL" =~ "roosterteeth.com" ]]; then
+  ROOSTER_TEETH="true"
+  DEST="$HOME/Downloads/Rooster Teeth/$FOLDER"
 else DEST="$HOME/Downloads/$FOLDER"
 fi
 if [[ "$URL" =~ "bbcamerica.com" ]]
 then DOWNLOADER=queue-dl --branch Dish
 fi
-ROOSTER_TEETH="false"
 # text file queue mode--not working because of weird quote issues
 #if [ -f "$URL" ]; then
 #  FILE="$URL"
@@ -213,7 +217,7 @@ elif [ "$URL" = "dailyshow" ]; then
 #  DEST="${DEST}iplayer-temp/"
 elif [[ "$URL" =~ "bbcamerica.com" ]]
 then OPT="--ap-mso Dish --ap-username bove@mcn.org --ap-password $(gkeyring --name 'dish' --keyring login -o secret)"
-elif [[ "$URL" =~ "roosterteeth.com" ]]; then
+elif [ "$ROOSTER_TEETH" = "true" ]; then
   if ! hash jq 2>/dev/null ; then
     echo "ERROR: roosterteeth.com support requires jq"
     exit 1
@@ -233,12 +237,10 @@ elif [[ "$URL" =~ "roosterteeth.com" ]]; then
   URL="$(curl "$API_URL" 2>/dev/null | jq -r '.data[].attributes[]' | grep http)"
   if echo "$URL" | grep -E "https?://roosterteeth.com/" || [ -z "$URL" ] \
   || [[ "$URL" =~ "parse error" ]]; then
-    echo "ERROR: Couldn't get Rooster Teeth API URL" | tee "${DEST}Rooster Teeth - $TITLE"
-    echo "\$API_URL=$API_URL" >> "${DEST}Rooster Teeth - $TITLE"
+    echo "ERROR: Couldn't get Rooster Teeth API URL" | tee "${DEST}$TITLE"
+    echo "\$API_URL=$API_URL" >> "${DEST}$TITLE"
     exit 1
   fi
-  # we no longer know exactly what the roosterteeth.com URL is, so we have to keep track a simpler way when it comes to later options
-  ROOSTER_TEETH="true"
 fi
 
 if [ "$2" = "--compatible" ]
@@ -297,7 +299,7 @@ elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]]
 then CMD="$CMD \"${DEST}%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
 elif [ "$ROOSTER_TEETH" = "true" ]
-then CMD="$CMD \"${DEST}Rooster Teeth/$TITLE.%(ext)s\" \"$URL\""
+then CMD="$CMD \"${DEST}$TITLE.%(ext)s\" \"$URL\""
 elif [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ]
 then CMD="$CMD \"${DEST}%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
 else CMD="$CMD \"${DEST}%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
