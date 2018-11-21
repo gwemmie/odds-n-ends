@@ -11,10 +11,10 @@
 
 set -x
 
-WINDOW="$(xdotool getwindowname $(xdotool getactivewindow))"
+WINDOW="$(xdt getwindowname $(xdt getactivewindow))"
 if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] || [[ "$WINDOW" =~ "SMPlayer" ]]; then
   sleep 0.1
-  xdotool key space
+  xdt key space
 elif [ -f $HOME/.dumbscripts/random ]; then
   rm $HOME/.dumbscripts/random
 else
@@ -22,11 +22,11 @@ else
   then
     if [[ "$WINDOW" =~ "Roll20" ]] | [[ "$WINDOW" =~ "Discord" ]]; then
       if [[ "$WINDOW" =~ "Roll20" ]]; then
-        xdotool mousemove 1900 1000
-        xdotool mousedown 1
-        xdotool mouseup 1
+        xdt mousemove 1900 1000
+        xdt mousedown 1
+        xdt mouseup 1
       fi
-      xdotool key 'i' 'm' "space" 'a' 'f' 'k' KP_Enter
+      xdt key 'i' 'm' "space" 'a' 'f' 'k' KP_Enter
 #    elif [ "$(pkill -0 -fc 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py')" = "0" ]; then
 #      python2 /home/jimi/.clementine-webremote/clementineWebRemote.py
     else
