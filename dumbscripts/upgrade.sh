@@ -7,12 +7,22 @@ ROUTERIP=$(sed -n 1p $INFO/$ROUTER.info) # IP of main computer & router
 NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 UPGRADE_STEAM=false
 
+# We can't input ignored packages right into the CLI anymore, because yay seems to get
+# glitchy when I attempt that. Like, really, inexplicably glitchy. This new method with
+# a temporary pacman.conf and IgnorePkg is safer than eval anyway.
+CONF="/tmp/pacman-$USER.conf"
+cp /etc/pacman.conf "$CONF"
+ignore() {
+  sed -i "s/^#\?\(IgnorePkg\s\+=\)/\1 $@/" "$CONF"
+}
+
 # packages we don't want the package manager to update (at least not automatically)
 SPLITP=( linux-rt-lts-docs linux-rt-lts-headers citra-qt-git libc++abi libc++experimental )
 MANUAL=( zyn-fusion qjackctl )
-BADVER=( xfce4-sensors-plugin )
+BADVER=( xfce4-sensors-plugin lm_sensors )
 NOTNOW=( unity-editor ) # huge packages that update (and redownload) *all the time* to the point that it's just not worth it unless you're currently using that program all the time
-IGNORE="${SPLITP[@]/#/--ignore } ${MANUAL[@]/#/--ignore } ${BADVER[@]/#/--ignore } ${NOTNOW[@]/#/--ignore }"
+IGNORE="${SPLITP[@]} ${MANUAL[@]} ${BADVER[@]} ${NOTNOW[@]}"
+ignore "$IGNORE"
 
 cache-upgrade() {
   PKG=$1
@@ -29,11 +39,19 @@ cache-upgrade() {
 
 echo "REMINDER: currently in NOTNOW: ${NOTNOW[@]}"
 
+KERNEL="$(uname -s | tr '[:upper:]' '[:lower:]')"
+if [[ "$(uname -r)" =~ "-rt" ]]
+then KERNEL+="-rt"
+fi
+if [[ "$(uname -r)" =~ "-lts" ]]
+then KERNEL+="-lts"
+fi
 while true; do
   read -n 1 -p "Skip kernel upgrade to avoid reboot? [Y/n] " ANS
   case $ANS in
     [Nn] ) echo; break;;
-       * ) echo; IGNORE="$IGNORE --ignore linux --ignore linux-lts"; break;;
+#      * ) echo; IGNORE="$IGNORE --ignore $KERNEL"; break;;
+       * ) echo; ignore "$KERNEL"; break;;
   esac
 done
 
@@ -65,7 +83,7 @@ for pkg in ${MANUAL[@]}
 do cache-upgrade $pkg
 done
 echo "Upgrading system..."
-eval "yay -Syu $IGNORE"
+yay -Syu --config "$CONF"
 
 # remove unwanted files from certain package upgrades
 if [ -f $HOME/.config/autostart/dropbox.desktop ]; then
