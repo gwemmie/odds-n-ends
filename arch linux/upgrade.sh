@@ -47,7 +47,7 @@ if [[ "$(uname -r)" =~ "-lts" ]]
 then KERNEL+="-lts"
 fi
 while true; do
-  read -n 1 -p "Skip kernel upgrade to avoid reboot? [y/N] " ANS
+  read -n 1 -p "Skip kernel upgrade to avoid reboot? [Y/n] " ANS
   case $ANS in
     [Nn] ) echo; break;;
 #      * ) echo; IGNORE="$IGNORE --ignore $KERNEL"; break;;
