@@ -32,7 +32,7 @@ cache-upgrade() {
   FILE="$(ls /var/cache/pacman/pkg/$PKG* | grep -P "$PKG-([0-9]|c[0-9]|r[0-9]|v[0-9]|latest)" | tail -1)"
   # can't have this function universally fail to upgrade a package named downgrade
   if [[ "$FILE" =~ "downgrad" ]] \
-  || ! [[ "$(echo -e "n\n" | sudo pacman -U $FILE 2>&1)" =~ "downgrad" ]]
+  || ! [[ "$(echo -e "n\n" | sudo pacman -U --confirm $FILE 2>&1)" =~ "downgrad" ]]
   then sudo pacman -U --noconfirm --needed $FILE
   fi
 }
@@ -68,7 +68,7 @@ if ! [ -f $HOME/.updated ] || test "`find $HOME/.updated -mtime +1`"; then
     echo "Copying cache from $ROUTER..."
     SAVEIFS=$IFS
     IFS=$(echo -en "\n\b")
-    for i in $(ls $BACKUP/pkg/$ROUTER/*.tar.xz)
+    for i in $(ls $BACKUP/pkg/$ROUTER/*.pkg.tar*)
     do sudo cp "$i" /var/cache/pacman/pkg/
     done
     IFS=$SAVEIFS

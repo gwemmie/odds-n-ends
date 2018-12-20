@@ -10,9 +10,9 @@ echo "INSTALLING PACKAGES..."
 sleep 2
 set -x
 if [ "$(hostname)" != "$ROUTER" ]
-then sudo cp -n $BACKUP/pkg/$ROUTER/*.tar.xz /var/cache/pacman/pkg/
+then sudo cp -n $BACKUP/pkg/$ROUTER/*.pkg.tar* /var/cache/pacman/pkg/
 fi
-sudo cp -n $BACKUP/pkg/$(hostname)/*.tar.xz /var/cache/pacman/pkg/
+sudo cp -n $BACKUP/pkg/$(hostname)/*.pkg.tar* /var/cache/pacman/pkg/
 # start with packages that hate --noconfirm (because they're a choice)
 # for KDE/Plasma, add phonon-qt5-backend
 sudo pacman -Sy libglvnd lib32-libglvnd ttf-font
