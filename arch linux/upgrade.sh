@@ -1,6 +1,7 @@
 #!/bin/bash
 BACKUP=$HOME/Backup/Computers/Linux
 PKG=$BACKUP/pkg/$(hostname)
+AUR=$BACKUP/pkg/$(hostname)-AUR
 INFO=$HOME/Dropbox/Settings/Scripts
 ROUTER=$(sed -n 1p $INFO/ROUTER) # hostname of main computer & router
 ROUTERIP=$(sed -n 1p $INFO/$ROUTER.info) # IP of main computer & router
@@ -17,11 +18,10 @@ ignore() {
 }
 
 # packages we don't want the package manager to update (at least not automatically)
-SPLITP=( linux-rt-lts-docs linux-rt-lts-headers citra-qt-git libc++abi libc++experimental )
-MANUAL=( zyn-fusion qjackctl )
-BADVER=( xfce4-sensors-plugin lm_sensors )
+MANUAL=( qjackctl )
+BADVER=()
 NOTNOW=( unity-editor ) # huge packages that update (and redownload) *all the time* to the point that it's just not worth it unless you're currently using that program all the time
-IGNORE="${SPLITP[@]} ${MANUAL[@]} ${BADVER[@]} ${NOTNOW[@]}"
+IGNORE="${MANUAL[@]} ${BADVER[@]} ${NOTNOW[@]}"
 ignore "$IGNORE"
 
 cache-upgrade() {
@@ -47,11 +47,11 @@ if [[ "$(uname -r)" =~ "-lts" ]]
 then KERNEL+="-lts"
 fi
 while true; do
-  read -n 1 -p "Skip kernel upgrade to avoid reboot? [Y/n] " ANS
+  read -p "Skip kernel upgrade to avoid reboot? [Y/n] " ANS
   case $ANS in
-    [Nn] ) echo; break;;
-#      * ) echo; IGNORE="$IGNORE --ignore $KERNEL"; break;;
-       * ) echo; ignore "$KERNEL"; break;;
+    [Nn] ) break;;
+#      * ) IGNORE="$IGNORE --ignore $KERNEL"; break;;
+       * ) ignore "$KERNEL"; break;;
   esac
 done
 
