@@ -12,13 +12,15 @@ NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 # any kind.
 remove-non-installed() {
   for i in $1/*; do
-    if ! [[ "$(echo -e "n\n" | sudo pacman -U --confirm "$i" 2>&1)" =~ "reinstall" ]]
-    then rm "$i"
+    if ! [[ "$(echo -e "n\n" | sudo pacman -U --confirm "$i" 2>&1)" =~ "reinstall" ]]; then
+      echo "Removing $i"
+      rm "$i"
     fi
   done
 }
 function clean-aur {
   while true; do
+    echo -en "\e[38;5;112m==>\e[0m "
     read -p "Clear AUR cache, keeping only installed packages? [Y/n] " ANS
     case $ANS in
       [nN] ) break;;
@@ -28,10 +30,13 @@ function clean-aur {
 }
 
 echo "Uninstalling leftover dependencies..."
-yay -Rcn $(yay -Qqtd)
+if yay -Qqtd >/dev/null
+then yay -Rcn $(yay -Qqtd)
+else echo "None to uninstall"
+fi
 yay -Sc
 clean-aur
-pacdiff # yup turns out yaourt -C is basically just this script from pacman-contrib
+sudo pacdiff # yup turns out yaourt -C is basically just this script from pacman-contrib
 echo -n "Backing cache up to home folder... "
 rsync -rt --delete /var/cache/pacman/pkg/ $PKG/
 echo $?
