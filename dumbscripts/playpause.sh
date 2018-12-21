@@ -12,15 +12,15 @@
 set -x
 
 WINDOW="$(xdt getwindowname $(xdt getactivewindow))"
-if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] || [[ "$WINDOW" =~ "SMPlayer" ]]; then
-  sleep 0.1
-  xdt key space
-elif [ -f $HOME/.dumbscripts/random ]; then
+if [ -f $HOME/.dumbscripts/random ]; then
   rm $HOME/.dumbscripts/random
 else
-  if pacmd list sinks | grep -Fq 'HD 4.40BT\|MM100\|LBT-PAR500'
+  if pacmd list sinks | grep -q 'device.description = "HD 4.40BT"\|device.description = "MM100"\|device.description = "LBT-PAR500'
   then
-    if [[ "$WINDOW" =~ "Roll20" ]] | [[ "$WINDOW" =~ "Discord" ]]; then
+    if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] || [[ "$WINDOW" =~ "SMPlayer" ]]; then
+      sleep 0.1
+      xdt key space
+    elif [[ "$WINDOW" =~ "Roll20" ]]; then # | [[ "$WINDOW" =~ "Discord" ]]
       if [[ "$WINDOW" =~ "Roll20" ]]; then
         xdt mousemove 1900 1000
         xdt mousedown 1

@@ -40,8 +40,8 @@ if [ -f "$PIDFILE" ] && [ "$(sed -n 1p "$PIDFILE")" != "" ]; then
 else echo $$ > "$PIDFILE"
 fi
 if [ "$1" != "nothing" ]; then
-  if [ "$i" = "--branch" ]
-  then $GITS/youtube-dl-$2 "${@:3}"
+  if [ "$1" = "--branch" ]
+  then $GITS/youtube-dl-$2/youtube-dl "${@:3}"
   else youtube-dl "$@"
   fi
   ERROR=$?

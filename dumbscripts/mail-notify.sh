@@ -194,9 +194,9 @@ function poll {
       disown -r && exit
     elif [ "$(<"$LOCKFILE")" = "reset" ]; then
       > "$LOCKFILE"
-      > "$MAILFILE"
       COUNTER=0
       reset
+      # don't break--let the loop go again so it stays marked as read in a grace period
     elif [ "$(<"$LOCKFILE")" = "recheck-all" ]; then
       > "$LOCKFILE"
       break;
@@ -282,13 +282,29 @@ while true; do
   IFS=$SAVEIFS
   # parse new emails into hash
   for ((i = 0; i < ${#OUTPUT[@]}; i = i + 2)); do
-    SUBJECT="${OUTPUT[$i]}"
-    ID="${OUTPUT[$i+1]}"
+    if [[ "$DOMAIN" =~ "gmail" ]] && [[ "${OUTPUT[$i]}" =~ "tag:gmail.google.com" ]] \
+    && ! [[ "${OUTPUT[$i+1]}" =~ "tag:gmail.google.com" ]]; then
+      # For some reason, GMail's atom feed, when faced with an empty email subject,
+      # will just skip that subject--no blank line or anything--leading to two
+      # separate messages' IDs back to back. This doesn't play nice with iterating by
+      # 2 lines each loop. It also causes the situation we just checked for--
+      # ${OUTPUT[$i]} becomes the blank subject's ID when it should be its subject,
+      # and ${OUTPUT[$i+1]} becomes the subject of the *next* email, instead of this
+      # current one's ID.
+      # You can bet this was a pain in the ass to figure out.
+      SUBJECT="(no subject)"
+      ID="${OUTPUT[$i]}"
+      i=$((i-1))
+    else
+      SUBJECT="${OUTPUT[$i]}"
+      ID="${OUTPUT[$i+1]}"
+    fi
+    if [ -z "$ID" ]
+    then error "at least one message ID is empty" 1 # results in exit
+    fi
     if ! messages-contains "$ID"; then
       messages-set "$ID" "$SUBJECT"
       NEWMESSAGES+=( "$SUBJECT" )
-    elif [ -z "$ID" ]
-    then error "at least one message ID is empty" 1 # results in exit
     fi
   done
   # check for no-longer-unread messages

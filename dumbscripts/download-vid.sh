@@ -75,6 +75,7 @@
 # delete the code that changes $DOWNLOADER, and the "per-site misc extra
 # params", for the following provider-login websites:
 # bbcamerica.com
+# history.com
 
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
 LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
@@ -105,15 +106,16 @@ fi
 # we will soon lose track of exactly what the roosterteeth.com URL is, so we have to keep track a simpler way when it comes to later options
 ROOSTER_TEETH="false"
 if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
-|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]]
+|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]] \
+|| [[ "$URL" =~ "history.com" ]]
 then DEST="$HOME/Downloads/Ongoing TV/$FOLDER"
 elif [[ "$URL" =~ "roosterteeth.com" ]]; then
   ROOSTER_TEETH="true"
   DEST="$HOME/Downloads/Rooster Teeth/$FOLDER"
 else DEST="$HOME/Downloads/$FOLDER"
 fi
-if [[ "$URL" =~ "bbcamerica.com" ]]
-then DOWNLOADER=queue-dl --branch Dish
+if [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]
+then DOWNLOADER='queue-dl --branch Dish'
 fi
 # text file queue mode--not working because of weird quote issues
 #if [ -f "$URL" ]; then
@@ -139,6 +141,7 @@ function compatibility_check {
   || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]] \
   || [[ "$URL" =~ "bbcamerica.com" ]] \
+  || [[ "$URL" =~ "history.com" ]] \
   || [[ "$URL" =~ "vid.me" ]] \
   || [ "$ROOSTER_TEETH" = "true" ]
   then
@@ -206,7 +209,7 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   else mv -- *$ID.ssa "$DEST$ID.ssa"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
-  OPT="--write-sub --sub-lang enUS --recode-video mkv --postprocessor-args "-c:copy" --embed-subs"
+  OPT="--write-sub --sub-lang enUS --recode-video mkv --postprocessor-args \"-c copy\" --embed-subs"
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "$URL")"
 elif [ "$URL" = "dailyshow" ]; then
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "http://www.cc.com/shows/the-daily-show-with-trevor-noah/full-episodes")"
@@ -215,7 +218,7 @@ elif [ "$URL" = "dailyshow" ]; then
 #  || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
 #  OPT="--proxy \"$UKPROXY\""
 #  DEST="${DEST}iplayer-temp/"
-elif [[ "$URL" =~ "bbcamerica.com" ]]
+elif [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]
 then OPT="--ap-mso Dish --ap-username bove@mcn.org --ap-password $(gkeyring --name 'dish' --keyring login -o secret)"
 elif [ "$ROOSTER_TEETH" = "true" ]; then
   if ! hash jq 2>/dev/null ; then
@@ -252,7 +255,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
   if [[ "$URL" =~ "crunchyroll.com" ]]; then
     # to avoid getting subs embedded in video stream
-    OPT="$OPT -f \"best[height<=480][format_id=audio-jaJP]\""
+    OPT="$OPT -f \"best[height<=480][format_id*=audio-jaJP]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]] \
     || [[ "$URL" =~ "vid.me" ]]; then
     # have to combine separate video/audio streams that aren't marked properly for youtube-dl to handle automatically
@@ -260,9 +263,9 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   elif [[ "$URL" =~ "bbcamerica.com" ]]
     # the sound quality for 480p is bad, and bad sound quality is simply not
     # worth obeying bandwidth limits
-  then OPT="-f \"best[height<=720]\""
+  then OPT="$OPT -f \"best[height<=720]\""
   else
-    OPT="-f \"best[height<=480]\""
+    OPT="$OPT -f \"best[height<=480]\""
   fi
   QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
   # wasn't doing anything for some reason
@@ -270,13 +273,13 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
 elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download medium quality..."
   if [[ "$URL" =~ "crunchyroll.com" ]]; then
-    OPT="$OPT -f \"best[height<=720][format_id=audio-jaJP]/best[height<=480][format_id=audio-jaJP]\""
+    OPT="$OPT -f \"best[height<=720][format_id*=audio-jaJP]/best[height<=480][format_id*=audio-jaJP]\""
   elif [[ "$URL" =~ "teamfourstar.com" ]] \
     || [[ "$URL" =~ "vid.me" ]]; then
     # have to combine separate video/audio streams that aren't marked properly for youtube-dl to handle automatically
     OPT="$OPT -f \"dash-video-avc1-3+dash-audio-und-mp4a-1/dash-video-avc1-3+dash-audio-und-mp4a-3/best[height<=720]/dash-video-avc1-1+dash-audio-und-mp4a-1/dash-video-avc1-1+dash-audio-und-mp4a-3/best[height<=480]\""
   else
-    OPT="-f \"best[height<=720]/best[height<=480]\""
+    OPT="$OPT -f \"best[height<=720]/best[height<=480]\""
   fi
   QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
   # wasn't doing anything for some reason
@@ -293,7 +296,7 @@ CMD="env LC_ALL=$LANG $DOWNLOADER $OPT ${EXOPT[@]} -o"
 
 # per-site destination params
 if [[ "$URL" =~ "cc.com" ]] || [[ "$URL" =~ "crunchyroll.com" ]] \
-|| [[ "$URL" =~ "bbcamerica.com" ]]
+|| [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]
 then CMD="$CMD \"${DEST}%(title)s $ID.%(ext)s\" \"$URL\""
 elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]]
