@@ -50,6 +50,10 @@ if [ "$RSS" != "false" ]
 then DEFAULTMENU+="|Check for messages & RSS (slower)...! $0 recheck-all"
 fi
 DEFAULTMENU+="|Run ${MAILPROG}! $0 launch"
+if [[ "$MAILPROG" =~ "thunderbird" ]]; then
+  DEFAULTMENU+="|Open address book! ${MAILPROG} -addressbook"
+  DEFAULTMENU+="|Compose message! ${MAILPROG} -compose"
+fi
 LOCKFILE="$(dirname $0)/$(basename $0 | sed 's/\.sh//')-lock"
 PIPEFILE="/tmp/$(basename $0 | sed 's/\.sh//')-yad-input"
 MAILFILE="$(dirname $0)/$(basename $0 | sed 's/\.sh//')-messages"

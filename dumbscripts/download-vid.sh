@@ -202,10 +202,12 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # what. I had to do that because I've had to deal with files named
   # "--$ID.ass", which were interpreted as arguments. Why not just put
   # it in quotes? Because that made the wildcard stop being a wildcard.
-  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ass | sed -n 3p)" ]; then rm -- *$ID.ass
+  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ass 2>/dev/null | sed -n 3p)" ]
+  then rm -- *$ID.ass
   else mv -- *$ID.ass "$DEST$ID.ass"
   fi
-  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ssa | sed -n 3p)" ]; then rm -- *$ID.ssa
+  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ssa 2>/dev/null | sed -n 3p)" ]
+  then rm -- *$ID.ssa
   else mv -- *$ID.ssa "$DEST$ID.ssa"
   fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
@@ -218,8 +220,12 @@ elif [ "$URL" = "dailyshow" ]; then
 #  || [[ "$URL" =~ "uktvplay.uktv.co.uk" ]]; then
 #  OPT="--proxy \"$UKPROXY\""
 #  DEST="${DEST}iplayer-temp/"
-elif [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]
-then OPT="--ap-mso Dish --ap-username bove@mcn.org --ap-password $(gkeyring --name 'dish' --keyring login -o secret)"
+elif [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]; then
+  OPT="--ap-mso Dish --ap-username bove@mcn.org --ap-password $(gkeyring --name 'dish' --keyring login -o secret)"
+  if [[ "$URL" =~ "history.com" ]]
+  # capitalize show name and reduce season/episode numbers, so "vikings/season-5/episode-15' becomes 'Vikings 515'
+  then TITLE="$(echo "$URL" | sed 's|https\?://\(www.\)\?history.com/shows/\([^/]\+\)/season-\([0-9]\+\)/episode-\([0-9]\+\).*|\u\2 \3\4|')"
+  fi
 elif [ "$ROOSTER_TEETH" = "true" ]; then
   if ! hash jq 2>/dev/null ; then
     echo "ERROR: roosterteeth.com support requires jq"
@@ -295,14 +301,17 @@ fi
 CMD="env LC_ALL=$LANG $DOWNLOADER $OPT ${EXOPT[@]} -o"
 
 # per-site destination params
-if [[ "$URL" =~ "cc.com" ]] || [[ "$URL" =~ "crunchyroll.com" ]] \
-|| [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]
+if [[ "$URL" =~ "cc.com" ]] || [[ "$URL" =~ "crunchyroll.com" ]]
 then CMD="$CMD \"${DEST}%(title)s $ID.%(ext)s\" \"$URL\""
+elif [[ "$URL" =~ "bbcamerica.com" ]]
+then CMD="$CMD \"${DEST}%(title)s.%(ext)s\" \"$URL\""
+elif [[ "$URL" =~ "history.com" ]]
+then CMD="$CMD \"${DEST}$TITLE %(title)s.%(ext)s\" \"$URL\""
+elif [ "$ROOSTER_TEETH" = "true" ]
+then CMD="$CMD \"${DEST}$TITLE.%(ext)s\" \"$URL\""
 elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
   || [[ "$URL" =~ "cwseed.com" ]]
 then CMD="$CMD \"${DEST}%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
-elif [ "$ROOSTER_TEETH" = "true" ]
-then CMD="$CMD \"${DEST}$TITLE.%(ext)s\" \"$URL\""
 elif [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ]
 then CMD="$CMD \"${DEST}%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
 else CMD="$CMD \"${DEST}%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""

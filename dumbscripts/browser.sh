@@ -110,9 +110,9 @@ fi
 # Check if string contains a defined media extension after its last /
 function MEDIA-contains() {
   for i in "${!MEDIA[@]}"; do
-    if echo "$1" | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1 | grep -qi "$i"; then
+    if echo "$1" | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1 | grep -qFi "$i"; then
       # account for those dang giffy's
-      if echo "$1" | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1 | grep -qi ".gifv"
+      if echo "$1" | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1 | grep -qFi ".gifv"
       then return 1
       fi
       echo "$i"
