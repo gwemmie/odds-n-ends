@@ -61,9 +61,6 @@
 # files in a text editor while also opening an image file in your image
 # viewer. You had to pick one of those. Por qué no los dos?
 
-# record the initial link, too, so it's easier to see what went wrong
-echo "$1" > "$OPENED"
-
 # I do some funny stuff with multiple Firefox profiles now
 BROWSER="$HOME/.dumbscripts/firefox.sh default"
 VIDEO1=$HOME/.dumbscripts/download-vid.sh
@@ -77,7 +74,6 @@ COMPUTER=$(sed -n 2p $INFO/$(hostname).info) # your external IP
 AT_HOME=$(sed -n 2p $INFO/$(sed -n 1p $INFO/ROUTER).info) # external IP of main computer & router
 OPS="-i $HOME/.ssh/id_rsa_$(sed -n 1p $INFO/ROUTER) -o StrictHostKeyChecking=no" # SSH options
 CMD="DISPLAY=:0 $HOME/.mydefaults/browser.sh $@ &"
-LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's_\(http.*://\(en\.\)\?\)\(mobile\|m\)\._\1_' | sed 's/&source=gmail.*//' | sed 's/&sa=.*\(&\|\?\|$\)//' | sed 's/&h=.*\(&\|\?\|$\)//')"
 # to fix a weird addon that Rambox started giving every outgoing link that resulted in a 404 on every website (now commented out because I no longer use Rambox)
 # | sed 's/&h=[a-zA-Z0-9_-]\+\(&s=[0-9]\)\?$//'
 RETURN="$HOME/.mydefaults/browser-return"
@@ -94,6 +90,10 @@ declare -A MEDIA=([".mp3"]=$AUDIO  [".m4a"]=$AUDIO  [".ogg"]=$AUDIO \
                   [".mkv"]=$VIDEO  [".flv"]=$VIDEO  [".avi"]=$VIDEO \
                   [".jpg"]=$IMAGE  [".jpeg"]=$IMAGE [".png"]=$IMAGE \
                   [".gif"]=$IMAGE  [".torrent"]=$TORRENT [".webp"]=$CHROME)
+
+# record the initial link, too, so it's easier to see what went wrong
+echo "$1" > "$OPENED"
+LINK="$(echo -e $(echo $1 | sed 's/%/\\x/g') | sed 's|http.*://.*\.facebook\.com/l\.php?u=||' | sed 's|http.*://l\.messenger\.com/l\.php?u=||' | sed 's|http.*://www\.google\.com/url?\(hl=en&\)\?q=||' | sed 's|http.*://steamcommunity\.com/linkfilter/?url=||' | sed 's_\(http.*://\(en\.\)\?\)\(mobile\|m\)\._\1_' | sed 's/&source=gmail.*//' | sed 's/&sa=.*\(&\|\?\|$\)//' | sed 's/&h=.*\(&\|\?\|$\)//')"
 
 # Check for remote use mode: "if computer is not at home" (heh)
 #if [ $(hostname) != $(sed -n 1p $INFO/ROUTER) ] && [ $COMPUTER != $AT_HOME ]
