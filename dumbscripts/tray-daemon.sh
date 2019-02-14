@@ -15,6 +15,7 @@
 LOCATION="$HOME/.dumbscripts" # where scripts live
 SCRIPTS=( mail-notify )
 DAEMONS=( orage )
+MENU="Restart $(basename $0)! $0 restart"
 declare -A YADPIDS
 
 if ! hash yad 2>/dev/null; then
@@ -22,7 +23,13 @@ if ! hash yad 2>/dev/null; then
   exit 1
 fi
 
-while true; do
+if [ "$1" = "restart" ]; then
+  for PID in $(pgrep -f $0 | grep -v $$)
+  do kill $PID
+  done
+  bash "$0" & disown
+  disown -r && exit
+else while true; do
   for SCRIPT in "${SCRIPTS[@]}"; do if ! pgrep -fl "$SCRIPT.sh" | grep -v yad; then
     if ! [ ${YADPIDS["$SCRIPT"]+_} ]; then
       # make sure original tray icon is gone
@@ -32,7 +39,7 @@ while true; do
       fi
       # start error tray icon
       ICON="$(grep "ICON=" "$LOCATION/$SCRIPT.sh" | head -1 | sed 's/.*ICON="//' | sed 's/".*//')-x"
-      yad --notification --text="$SCRIPT is off, click to restart" --command="$LOCATION/$SCRIPT.sh" --image="$ICON" 2>/dev/null &
+      yad --notification --text="$SCRIPT is off, click to restart" --command="$LOCATION/$SCRIPT.sh" --image="$ICON" --menu="$MENU" 2>/dev/null &
       YADPIDS["$SCRIPT"]=$!
     elif ! ps ${YADPIDS["$SCRIPT"]}
     then unset YADPIDS["$SCRIPT"]
@@ -45,7 +52,7 @@ while true; do
     if ! [ ${YADPIDS["$DAEMON"]+_} ]; then
       # start error tray icon
       ICON="system-error"
-      yad --notification --text="$DAEMON is off, click to restart" --command="$DAEMON" --image="$ICON" 2>/dev/null &
+      yad --notification --text="$DAEMON is off, click to restart" --command="$DAEMON" --image="$ICON" --menu="$MENU" 2>/dev/null &
       YADPIDS["$DAEMON"]=$!
     elif ! ps ${YADPIDS["$DAEMON"]}
     then unset YADPIDS["$DAEMON"]
@@ -55,4 +62,4 @@ while true; do
     unset YADPIDS["$DAEMON"]
   fi; done
   sleep 1
-done
+done; fi
