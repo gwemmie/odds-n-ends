@@ -7,8 +7,10 @@ EXIP=$(sed -n 2p $INFO/$ROUTER.info) # public IP on last boot
 
 if [ $(hostname) = "Death-Tower" ]; then
   NEWEXIP=$(/usr/bin/dig +short myip.opendns.com @resolver1.opendns.com)
-  if [ "$EXIP" != "$NEWEXIP" ]
-  then notify-send -u critical -t 300000 "public IP has changed from $EXIP to $NEWEXIP"
+  if echo "$NEWEXIP" | grep -qvx "10\.0\..*\|192\.168\..*"; then
+    if [ "$EXIP" != "$NEWEXIP" ]
+    then notify-send -u critical -t 300000 "public IP has changed from $EXIP to $NEWEXIP"
+    fi
+    echo $NEWEXIP >> $INFO/$(hostname).info
   fi
-  echo $NEWEXIP >> $INFO/$(hostname).info
 fi

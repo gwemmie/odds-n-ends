@@ -78,7 +78,7 @@
 # history.com
 
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
-LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" )
+LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" "00:25:9c:c1:63:b1" )
 MEDBAND=( "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" "b8:c7:5d:cb:75:1d" )
 UKPROXY="91.229.222.163:53281" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
