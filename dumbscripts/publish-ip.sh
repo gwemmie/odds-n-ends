@@ -5,12 +5,14 @@ ROUTER=$(sed -n 1p $INFO/ROUTER) # hostname of main computer & router
 EXIP=$(sed -n 2p $INFO/$ROUTER.info) # public IP on last boot
 /usr/bin/ifconfig $(ip route ls | grep 'default via' | head -1 | awk '{ print $5}') | grep 'inet ' | awk '{ print $2}' > $INFO/$(hostname).info
 
-if [ $(hostname) = "Death-Tower" ]; then
-  NEWEXIP=$(/usr/bin/dig +short myip.opendns.com @resolver1.opendns.com)
-  if echo "$NEWEXIP" | grep -qvx "10\.0\..*\|192\.168\..*"; then
-    if [ "$EXIP" != "$NEWEXIP" ]
-    then notify-send -u critical -t 300000 "public IP has changed from $EXIP to $NEWEXIP"
-    fi
-    echo $NEWEXIP >> $INFO/$(hostname).info
+NEWEXIP=$(/usr/bin/dig +short myip.opendns.com @resolver1.opendns.com)
+if [ -z "$NEWEXIP" ]
+then notify-send -u critical -t 300000 "public IP seems empty right now?"
+elif echo "$NEWEXIP" | grep -qx "10\.0\..*\|192\.168\..*"
+then notify-send -u critical -t 300000 "the router might not have gotten a public IP assigned"
+else
+  if [ "$EXIP" != "$NEWEXIP" ]
+  then notify-send -u critical -t 300000 "public IP has changed from $EXIP to $NEWEXIP"
   fi
+  echo $NEWEXIP >> $INFO/$(hostname).info
 fi
