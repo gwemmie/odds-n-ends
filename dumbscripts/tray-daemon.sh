@@ -14,7 +14,7 @@
 # I decided to also add a simpler version of the loop for regular daemon-style programs
 LOCATION="$HOME/.dumbscripts" # where scripts live
 SCRIPTS=( mail-notify )
-DAEMONS=( orage )
+DAEMONS=( orage linphone )
 MENU="Restart $(basename $0)! $0 restart"
 declare -A YADPIDS
 
@@ -52,6 +52,9 @@ else while true; do
     if ! [ ${YADPIDS["$DAEMON"]+_} ]; then
       # start error tray icon
       ICON="system-error"
+      if [ "$DAEMON" = "linphone" ]
+      then ICON="sflphone-offline"
+      fi
       yad --notification --text="$DAEMON is off, click to restart" --command="$DAEMON" --image="$ICON" --menu="$MENU" 2>/dev/null &
       YADPIDS["$DAEMON"]=$!
     elif ! ps ${YADPIDS["$DAEMON"]}
