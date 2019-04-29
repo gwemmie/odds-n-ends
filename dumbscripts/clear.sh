@@ -25,6 +25,9 @@ rm -rf $HOME/.adobe $HOME/.macromedia
 # update Downloads folder
 $HOME/.dumbscripts/update-downloads.sh & disown
 
+# fix steam URL
+sed -i 's/steam-runtime.desktop;.*/steam.desktop;/' $HOME/.local/share/applications/mimeinfo.cache
+
 # trash items > 30 days old
 # not implemented
 # Hey, I'm lazy. My trash bin has been constantly broken in various ways
