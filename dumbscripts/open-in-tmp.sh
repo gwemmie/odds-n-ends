@@ -8,8 +8,13 @@
 # up.
 
 PLAYER=/usr/bin/smplayer
+FOLDER=/tmp/vids
 
-ls --group-directories-first $HOME/Downloads > $HOME/Dropbox/Settings/Scripts/Downloads
+$HOME/.dumbscripts/update-downloads.sh
+
+if ! [ -d "$FOLDER" ]
+then mkdir -p "$FOLDER"
+fi
 
 for i in "$@"; do
   if [ -d "$i" ]; then
@@ -22,16 +27,12 @@ for i in "$@"; do
     notify-send "open-in-tmp.sh: error: file not found"
     exit 1
   fi
-  mv "$i" /tmp/
+  mv "$i" "$FOLDER/"
 done
 
 ARGS=()
 for i in "$@"; do
-  # get the last part of the path after the last slash, i.e. filename
-  if [[ "$i" =~ '/' ]]
-  then ARG="\"/tmp/$(echo $i | cut -d'/' -s -f1- --output-delimiter=$'\n' | tail -1)\""
-  else ARG="\"/tmp/$i\""
-  fi
+  ARG="\"$(basename "$i")\""
   # skip subtitles files
   if [[ "$ARG" =~ ".srt" ]] || [[ "$ARG" =~ ".ass" ]] || [[ "$ARG" =~ ".ssa" ]] || [[ "$ARG" =~ ".sub" ]]
   then continue

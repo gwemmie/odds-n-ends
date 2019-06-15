@@ -5,7 +5,7 @@ ROUTER=$(sed -n 1p $INFO/ROUTER) # hostname of main computer & router
 ROUTERIP=$(sed -n 1p $INFO/$ROUTER.info) # IP of main computer & router
 NATS=$(sed -n 2p $INFO/ROUTER) # number of NAT networks router has
 
-while ! nc -zw1 google.com 80; do sleep 1; done
+while ! $HOME/.dumbscripts/check-internet.sh 80 5; do sleep 1; done
 
 FOUND_ROUTER="false"
 if ! nc -zw1 $ROUTERIP 22

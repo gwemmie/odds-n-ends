@@ -9,10 +9,14 @@ fi
 sed -i "1s|.*|$(/usr/bin/ifconfig $(ip route ls | grep 'default via' | head -1 | awk '{ print $5}') | grep 'inet ' | awk '{ print $2}')|" $INFO/$(hostname).info
 
 NEWEXIP=$(/usr/bin/dig +short myip.opendns.com @resolver1.opendns.com)
-if [ -z "$NEWEXIP" ]
-then notify-send -u critical -t 300000 "public IP seems empty right now?"
+if echo "$NEWEXIP" | grep -qvx "[0-9]\+\.[0-9]\+\.[0-9]\+\.[0-9]\+\|[a-zA-Z0-9]\+::[a-zA-Z0-9]\+:[a-zA-Z0-9]\+:[a-zA-Z0-9]\+:[a-zA-Z0-9]\+/[0-9]\+"
+then if $HOME/.dumbscripts/check-internet.sh
+  then notify-send -u critical -t 300000 "could not get public IP"
+  fi
 elif echo "$NEWEXIP" | grep -qx "10\.0\..*\|192\.168\..*"
-then notify-send -u critical -t 300000 "the router might not have gotten a public IP assigned"
+then if $HOME/.dumbscripts/check-internet.sh
+  then notify-send -u critical -t 300000 "public IP is local"
+  fi
 else
   if [ "$EXIP" != "$NEWEXIP" ]
   then notify-send -u critical -t 300000 "public IP has changed from $EXIP to $NEWEXIP"

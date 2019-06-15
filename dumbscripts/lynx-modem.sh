@@ -4,7 +4,7 @@
 # This is way too specific to me to be anything but a template.
 
 while true; do
-  if ! nc -zw1 google.com 80; then if ! nc -zw1 google.com 80; then
+  if ! $HOME/.dumbscripts/check-internet.sh; then if ! $HOME/.dumbscripts/check-internet.sh; then
     lynx -cmd_script=$HOME/.dumbscripts/lynx-modem http://192.168.100.1/cmConfig.htm
     sleep 20
     if ! nc -zw1 google.com 80; then

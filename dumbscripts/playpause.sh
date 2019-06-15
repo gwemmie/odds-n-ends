@@ -9,6 +9,15 @@
 # it support Clementine's web remote feature (another music player).
 # Sorry, this script doesn't keep lines under 80 chars long.
 
+function quodlibet-pause() {
+  if [ "$1" = "check" ]
+  then if ! quodlibet --status | grep -q playing
+    then return
+    fi
+  fi
+  quodlibet --play-pause & disown
+}
+
 set -x
 
 WINDOW="$(xdt getwindowname $(xdt getactivewindow))"
@@ -33,11 +42,11 @@ else
       while [ -f "$HOME/.dumbscripts/quodlibet-starting" ]
       do sleep 1
       done
-      quodlibet --play-pause & disown
+      quodlibet-pause $1
     fi
   else
     #pkill -f 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py'
     sleep 0.1
-    quodlibet --play-pause & disown
+    quodlibet-pause $1
   fi
 fi

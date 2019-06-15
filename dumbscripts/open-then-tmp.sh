@@ -4,13 +4,11 @@
 # I made this because I keep freshly downloaded YouTube videos in a
 # Downloads folder until I watch them, and moving them myself every time
 # was getting cumbersome.
-# New feature: backs up a list of your downloaded videos so that getting
-# them back isn't a nightmare if your hard drive dies before you back it
-# up.
 
 PLAYER=/usr/bin/smplayer
+FOLDER=/tmp/vids
 
-ls --group-directories-first $HOME/Downloads > $HOME/Dropbox/Settings/Scripts/Downloads
+$HOME/.dumbscripts/update-downloads.sh # organize downloads & export a list of them
 
 for i in "$@"; do
   if [ -d "$i" ]; then
@@ -25,7 +23,12 @@ for i in "$@"; do
   fi
 done
 
+if ! [ -d "$FOLDER" ]
+then mkdir -p "$FOLDER"
+fi
+
 ARGS=()
+FILES=()
 for i in "$@"; do
   ARG="\"$i\""
   # skip subtitles files
@@ -33,12 +36,19 @@ for i in "$@"; do
   then continue
   else ARGS+=( "$ARG" )
   fi
+  # make temporary file to show watching status
+  FILE="$FOLDER/~watching - $(basename "$i")"
+  echo "$i" > "$FILE"
+  FILES+=( "$FILE" )
 done
 
 eval "$PLAYER" ${ARGS[@]} &
 wait $!
 disown
 
-for i in "$@"; do
-  mv "$i" /tmp/
+for i in "${FILES[@]}"
+do rm "$i"
+done
+for i in "$@"
+do mv "$i" "$FOLDER/"
 done

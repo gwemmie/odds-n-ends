@@ -34,6 +34,7 @@ elif pgrep 'quodlibet' | grep -v $$; then
 fi
 
 # get newer queue from other computer
+$HOME/.dumbscripts/quodlibet-wait-for-cloud.sh
 if ! [ -f "$LAST_PLAYER" ]; then
   notify-send -t 10000 "quodlibet-player file missing; recreating"
   hostname > "$LAST_PLAYER"
