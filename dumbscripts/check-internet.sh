@@ -13,9 +13,13 @@ if ! [ -z "$2" ]
 then TIMEOUT=$2
 fi
 
-#if ! nc -zw$TIMEOUT $MOONWAN 80 && ! nc -zw$TIMEOUT $MOONLAN 80
+if nc -zw$TIMEOUT $MOONLAN 80 && ping -c1 -w$TIMEOUT $MOONLAN
+then if [ "$3" = "local" ]
+  then exit 0
+  fi
+#elif ! nc -zw$TIMEOUT $MOONWAN 80 || ! ping -c1 -w$TIMEOUT $MOONWAN
 #then exit $?
-#fi
+fi
 
 for URL in ${TESTS[@]}; do
   nc -zw$TIMEOUT $URL $PORT

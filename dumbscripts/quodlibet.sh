@@ -47,7 +47,7 @@ if ! grep -Fxq $(hostname) "$LAST_PLAYER"; then
   hostname > "$LAST_PLAYER"
   CURRENT_SONG="$(grep '~filename=' "$CURRENT" | sed 's/~filename=//')"
   CURRENT_SEEK=$(<"$SEEK")
-  sed -i "s/song = .*/song = $CURRENT_SONG/" $HOME/.quodlibet/config
+  sed -i "s|song = .*|song = $(echo $CURRENT_SONG | sed 's/|/\\\|/')|" $HOME/.quodlibet/config
   sed -i "s/seek = .*/seek = $CURRENT_SEEK/" $HOME/.quodlibet/config
   cp "$CURRENT" $HOME/.quodlibet/current
   cp "$QUEUE" $HOME/.quodlibet/queue

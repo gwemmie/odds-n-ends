@@ -8,28 +8,28 @@
 # It also has, commented out, what lengths I had to go through to make
 # it support Clementine's web remote feature (another music player).
 # Sorry, this script doesn't keep lines under 80 chars long.
-
-function quodlibet-pause() {
-  if [ "$1" = "check" ]
-  then if ! quodlibet --status | grep -q playing
-    then return
-    fi
-  fi
-  quodlibet --play-pause & disown
-}
+WINDOW="$(xdt getwindowname $(xdt getactivewindow))"
 
 set -x
 
-WINDOW="$(xdt getwindowname $(xdt getactivewindow))"
+if [ "$1" != "pause-all" ]; then
+
 if [ -f $HOME/.dumbscripts/random ]; then
   rm $HOME/.dumbscripts/random
 else
-  if pacmd list sinks | grep -q 'device.description = "HD 4.40BT"\|device.description = "MM100"\|device.description = "LBT-PAR500'
+  if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] \
+  || [[ "$WINDOW" =~ "SMPlayer" ]]; then
+    sleep 0.1
+    if [[ "$WINDOW" =~ "plugin-container" ]]
+    then xdt key space
+    elif [[ "$WINDOW" =~ "SMPlayer" ]]
+    then qdbus org.mpris.MediaPlayer2.smplayer /org/mpris/MediaPlayer2 PlayPause
+    elif [[ "$WINDOW" =~ "VLC media player" ]]
+    then qdbus org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause
+    fi
+  elif pacmd list sinks | grep -q 'device.description = "HD 4.40BT"\|device.description = "MM100"\|device.description = "LBT-PAR500'
   then
-    if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] || [[ "$WINDOW" =~ "SMPlayer" ]]; then
-      sleep 0.1
-      xdt key space
-    elif [[ "$WINDOW" =~ "Roll20" ]]; then # | [[ "$WINDOW" =~ "Discord" ]]
+    if [ "$1" != "check" ]  && [[ "$WINDOW" =~ "Roll20" ]]; then # | [[ "$WINDOW" =~ "Discord" ]]
       if [[ "$WINDOW" =~ "Roll20" ]]; then
         xdt mousemove 1900 1000
         xdt mousedown 1
@@ -42,11 +42,23 @@ else
       while [ -f "$HOME/.dumbscripts/quodlibet-starting" ]
       do sleep 1
       done
-      quodlibet-pause $1
+      quodlibet --play-pause & disown
     fi
-  else
+  elif [ "$1" != "check" ]; then
     #pkill -f 'python2 /home/jimi/.clementine-webremote/clementineWebRemote.py'
     sleep 0.1
-    quodlibet-pause $1
+    quodlibet --play-pause & disown
   fi
+fi
+
+else # pause everything
+
+sleep 0.1
+if [[ "$WINDOW" =~ "plugin-container" ]]
+then xdt key space
+fi
+qdbus org.mpris.MediaPlayer2.smplayer /org/mpris/MediaPlayer2 Pause
+qdbus org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.Pause
+quodlibet --pause & disown
+
 fi

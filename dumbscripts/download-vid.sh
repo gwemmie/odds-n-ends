@@ -78,13 +78,17 @@
 # history.com
 
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
-LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" "00:25:9c:c1:63:b1" "1c:87:2c:d3:bd:bc" )
-MEDBAND=( "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" "b8:c7:5d:cb:75:1d" )
+LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" "00:25:9c:c1:63:b1" "ac:86:74:dd:91:62" )
+MEDBAND=( "1c:87:2c:d3:bd:bc" "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" "b8:c7:5d:cb:75:1d" "00:23:33:94:cd:45" "c4:6e:1f:96:a0:70" "14:ca:6d:bb:8c:d8" "b4:fb:e4:33:f3:29" "6c:3b:6b:bd:33:c6" )
 UKPROXY="91.229.222.163:53281" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/xfce4-terminal
 BROWSER=$(grep BROWSER= $HOME/.dumbscripts/browser.sh | sed 's/BROWSER="\?\([^"]\+\)"\?/\1/')
 PLAYER=/usr/bin/smplayer
+VIDEOS="$HOME/Downloads"
+EXECFILE="/tmp/download-vid"
+ERRORFILE="$EXECFILE-error-$$.sh"
+ASKFILE="$EXECFILE-ask-$$.sh"
 if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
   if [ "$2" = "--compatible" ]; then
     URL="$3"
@@ -108,11 +112,10 @@ ROOSTER_TEETH="false"
 if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
 || [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]] \
 || [[ "$URL" =~ "history.com" ]]
-then DEST="$HOME/Downloads/Ongoing TV/$FOLDER"
-elif [[ "$URL" =~ "roosterteeth.com" ]]; then
-  ROOSTER_TEETH="true"
-  DEST="$HOME/Downloads/Rooster Teeth/$FOLDER"
-else DEST="$HOME/Downloads/$FOLDER"
+then DEST="$VIDEOS/Ongoing TV/$FOLDER"
+elif [[ "$URL" =~ "roosterteeth.com" ]]
+then ROOSTER_TEETH="true"
+else DEST="$VIDEOS/$FOLDER"
 fi
 if [[ "$URL" =~ "bbcamerica.com" ]] || [[ "$URL" =~ "history.com" ]]
 then DOWNLOADER='queue-dl --branch Dish'
@@ -154,25 +157,25 @@ function compatibility_check {
 }
 
 # this function will be used by another temp sh file
-cat >/tmp/download-vid-error.sh <<\EOF
+cat >"$ERRORFILE" <<EOF
 #!/bin/bash
-function error_handling() { # args: (error code, $DOWNLOADER, $CMD, [--terminal])
-  if [ "$1" != 0 ] && [ "$1" != 255 ]; then
+function error_handling() { # args: (error code, \$DOWNLOADER, \$CMD, [--terminal])
+  if [ "\$1" != 0 ] && [ "\$1" != 255 ]; then
     echo
-    echo "ERROR: Something went wrong with $2"
-    echo "Command attempted: $3"
+    echo "ERROR: Something went wrong with \$2"
+    echo "Command attempted: \$3"
     echo
-    if [ "$4" != "--terminal" ]; then
+    if [ "\$4" != "--terminal" ]; then
       read -n1 -r -p "Press any key to exit..."
       echo
     fi
-    exit $1
+    exit \$1
   fi
-  rm /tmp/download-vid-error.sh
+  rm "$ERRORFILE"
 }
 EOF
-chmod +x /tmp/download-vid-error.sh
-source /tmp/download-vid-error.sh
+chmod +x "$ERRORFILE"
+source "$ERRORFILE"
 
 # Plagiaraized from http://stackoverflow.com/questions/3685970/check-if-an-array-contains-a-value
 function contains() {
@@ -307,23 +310,45 @@ elif [[ "$URL" =~ "bbcamerica.com" ]]
 then CMD="$CMD \"${DEST}%(title)s.%(ext)s\" \"$URL\""
 elif [[ "$URL" =~ "history.com" ]]
 then CMD="$CMD \"${DEST}$TITLE %(title)s.%(ext)s\" \"$URL\""
-elif [ "$ROOSTER_TEETH" = "true" ]
-then CMD="$CMD \"${DEST}$TITLE.%(ext)s\" \"$URL\""
-elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
-  || [[ "$URL" =~ "cwseed.com" ]]
-then CMD="$CMD \"${DEST}%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
-elif [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ]
-then CMD="$CMD \"${DEST}%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
-else CMD="$CMD \"${DEST}%(uploader)s - %(title)s $ID.%(ext)s\" \"$URL\""
+elif ! [ -f "$VIDEOS/.toggled" ] \
+  && ( [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ] ); then
+  if [ "$ROOSTER_TEETH" = "true" ]; then
+    DEST="$VIDEOS/Rooster Teeth/"
+    CMD="$CMD \"${DEST}$TITLE.%(ext)s\" \"$URL\""
+  elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
+    || [[ "$URL" =~ "cwseed.com" ]]
+  then CMD="$CMD \"${DEST}%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
+  else CMD="$CMD \"${DEST}%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
+  fi
+else
+  if [ "$ROOSTER_TEETH" = "true" ]; then
+    DEST="$VIDEOS/${FOLDER}Rooster Teeth"
+    CMD="$CMD \"${DEST} - $TITLE.%(ext)s\" \"$URL\""
+  elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
+    || [[ "$URL" =~ "cwseed.com" ]]; then
+    EXTRACTOR="$(youtube-dl --get-filename -o %\(extractor\)s "$URL")"
+    DEST="$VIDEOS/$FOLDER$EXTRACTOR"
+    CMD="$CMD \"${DEST} - %(title)s $ID.%(ext)s\" \"$URL\""
+  else
+    UPLOADER="$(youtube-dl --get-filename -o %\(uploader\)s "$URL")"
+    echo $UPLOADER
+    DEST="$VIDEOS/$FOLDER$UPLOADER"
+    CMD="$CMD \"${DEST} - %(title)s $ID.%(ext)s\" \"$URL\""
+    echo $CMD
+  fi
+  if [ -f "$VIDEOS/.toggled" ]; then
+    mkdir "$DEST" 2>/dev/null || true
+    echo "$(basename $DEST)" >> "$VIDEOS/.toggled"
+  fi
 fi
 
 if [ "$1" != "--terminal" ]; then
   if [ "$1" = "--compatible" ]
   then CMD="$HOME/.dumbscripts/download-vid.sh --terminal --compatible \"$URL\"; cat"
   elif [ "$3" = "--ask" ]; then
-    cat >/tmp/download-vid-ask.sh <<EOF
+    cat >"$ASKFILE" <<EOF
 #!/bin/bash
-source /tmp/download-vid-error.sh
+source "$ERRORFILE"
 while true; do
   read -n 1 -p "Download, browser, player, copy link, or quit? [D/B/P/C/Q] " ANS
   case \$ANS in
@@ -336,10 +361,10 @@ while true; do
   esac
 done
 error_handling \$ERROR "$DOWNLOADER" '$CMD'
-rm /tmp/download-vid-ask.sh
+rm "$ASKFILE"
 EOF
-    chmod +x /tmp/download-vid-ask.sh
-    CMD="/tmp/download-vid-ask.sh"
+    chmod +x "$ASKFILE"
+    CMD="$ASKFILE"
   fi
   CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e \"bash -c '$(echo $CMD)'\""
 fi
@@ -350,12 +375,10 @@ ERROR=$?
 
 error_handling $ERROR "$DOWNLOADER" "$CMD" --terminal
 
-ls --group-directories-first $HOME/Downloads > $HOME/Dropbox/Settings/Scripts/Downloads
-
 if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]; then
   mv "$DEST$ID.ass" "$(find $DEST -name "*$ID.mp4" | sed -n 1p | sed 's/\.mp4/\.ass/')"
 elif [[ "$URL" =~ "bbc.co.uk" ]]; then
-  mv "$(ls "${DEST}*.mkv")" $HOME/Downloads/
+  mv "$(ls "${DEST}*.mkv")" $VIDEOS/
   rmdir "$DEST"
 fi
 
