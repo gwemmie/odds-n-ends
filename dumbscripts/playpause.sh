@@ -8,17 +8,20 @@
 # It also has, commented out, what lengths I had to go through to make
 # it support Clementine's web remote feature (another music player).
 # Sorry, this script doesn't keep lines under 80 chars long.
+PODCAST="/tmp/podcast-playing"
 WINDOW="$(xdt getwindowname $(xdt getactivewindow))"
 
 set -x
 
 if [ "$1" != "pause-all" ]; then
 
-if [ -f $HOME/.dumbscripts/random ]; then
+if [ -f "$PODCAST" ]
+then $HOME/.dumbscripts/podcast.sh pause
+elif [ -f $HOME/.dumbscripts/random ]; then
   rm $HOME/.dumbscripts/random
 else
-  if [[ "$WINDOW" =~ "plugin-container" ]] || [[ "$WINDOW" =~ "VLC media player" ]] \
-  || [[ "$WINDOW" =~ "SMPlayer" ]]; then
+  if [[ "$WINDOW" =~ "SMPlayer" ]] || [[ "$WINDOW" =~ "plugin-container" ]] \
+  || [[ "$WINDOW" =~ "VLC media player" ]]; then
     sleep 0.1
     if [[ "$WINDOW" =~ "plugin-container" ]]
     then xdt key space
@@ -54,6 +57,7 @@ fi
 else # pause everything
 
 sleep 0.1
+$HOME/.dumbscripts/podcast.sh pause
 if [[ "$WINDOW" =~ "plugin-container" ]]
 then xdt key space
 fi

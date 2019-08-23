@@ -63,7 +63,8 @@
 # package iputils) to be automatic. Otherwise, you can modify the script
 # to just always download in 480p.
 # Supported sites for automatic 480p are in that if-statement.
-# Also can do automatic 720p with MEDBAND.
+# Also can do automatic 1080p (or whatever's the highest) with HIGHBAND.
+# Otherwise defaults to 720p on any known site.
 # Here's a list of sites in which I made LOWBAND point to 720p instead,
 # because the sound quality of 480p was bad:
 # bbcamerica.com
@@ -79,7 +80,7 @@
 
 ROUTER="$(ip neigh show $(ip route show match 0/0 | awk '{print $3}') | awk '{ print $5 }')"
 LOWBAND=( "00:0d:93:21:9d:f4" "14:dd:a9:d7:67:14" "00:25:9c:c1:63:b1" "ac:86:74:dd:91:62" )
-MEDBAND=( "1c:87:2c:d3:bd:bc" "08:86:3b:b4:eb:d4" "44:e1:37:cb:2d:90" "b8:c7:5d:cb:75:1d" "00:23:33:94:cd:45" "c4:6e:1f:96:a0:70" "14:ca:6d:bb:8c:d8" "b4:fb:e4:33:f3:29" "6c:3b:6b:bd:33:c6" )
+HIGHBAND=()
 UKPROXY="91.229.222.163:53281" # taken from http://free-proxy-list.net/uk-proxy.html
 DOWNLOADER=queue-dl
 TERMINAL=/usr/bin/xfce4-terminal
@@ -279,7 +280,7 @@ if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   QUALITY=$(echo $OPT | sed 's/.*-f "\(.*\)".*/\1/')
   # wasn't doing anything for some reason
   #sed -i "s/streaming\\youtube\\quality=.*/streaming\\youtube\\quality=$QUALITY/" $HOME/.config/smplayer/smplayer.ini
-elif [ $(contains "${MEDBAND[@]}" "$ROUTER") = "y" ]; then
+elif [ $(contains "${HIGHBAND[@]}" "$ROUTER") = "n" ]; then
   echo "Trying to download medium quality..."
   if [[ "$URL" =~ "crunchyroll.com" ]]; then
     OPT="$OPT -f \"best[height<=720][format_id*=audio-jaJP]/best[height<=480][format_id*=audio-jaJP]\""

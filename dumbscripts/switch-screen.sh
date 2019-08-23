@@ -31,13 +31,15 @@ fi
 xdt windowmove $WINDOW $(expr $POS - $ERRORX) $(expr $WINDOWY - $ERRORY)
 # window might be maximized (if it didn't move, that's our proof):
 if [ "$(xdt getwindowgeometry $WINDOW | grep Position | sed 's/\s*Position: \([0-9]\+\),\([0-9]\+\) .*/\1 \2/')" = "$WINDOWPOS" ]; then
-  xdt keyup Control+Alt+s # shortcut used to run this script; interferes with Alt+F10
+  #xdt keyup Control+Alt+s # shortcut used to run this script; interferes with Alt+F10
   xdt windowfocus $WINDOW
-  xdt key Alt+F10 # XFCE (un)maximize shortcut
+  #xdt key Alt+F10 # XFCE (un)maximize shortcut
+  wmctrl -r :ACTIVE: -b remove,maximized_vert,maximized_horz
   sleep 0.2
   xdt windowmove $WINDOW $(expr $POS - $ERRORX) $(expr $WINDOWY - $ERRORY)
   xdt windowfocus $WINDOW
-  xdt key Alt+F10 # maximize it again when it's moved over
+  #xdt key Alt+F10 # maximize it again when it's moved over
+  wmctrl -r :ACTIVE: -b add,maximized_vert,maximized_horz
 fi
 exit
 
