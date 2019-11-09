@@ -30,7 +30,7 @@ else
     elif [[ "$WINDOW" =~ "VLC media player" ]]
     then qdbus org.mpris.MediaPlayer2.vlc /org/mpris/MediaPlayer2 org.mpris.MediaPlayer2.Player.PlayPause
     fi
-  elif pacmd list sinks | grep -q 'device.description = "HD 4.40BT"\|device.description = "MM100"\|device.description = "LBT-PAR500'
+  elif pacmd list sinks | grep -q 'device.description = "HD 4.40BT"\|device.description = "HD1 M2 IEBT"\|device.description = "MM100"\|device.description = "LBT-PAR500'
   then
     if [ "$1" != "check" ]  && [[ "$WINDOW" =~ "Roll20" ]]; then # | [[ "$WINDOW" =~ "Discord" ]]
       if [[ "$WINDOW" =~ "Roll20" ]]; then

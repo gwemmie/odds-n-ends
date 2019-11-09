@@ -89,6 +89,7 @@ PLAYER=/usr/bin/smplayer
 VIDEOS="$HOME/Downloads"
 EXECFILE="/tmp/download-vid"
 ERRORFILE="$EXECFILE-error-$$.sh"
+OUTPUTFILE="$EXECFILE-output-$$"
 ASKFILE="$EXECFILE-ask-$$.sh"
 if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
   if [ "$2" = "--compatible" ]; then
@@ -132,7 +133,7 @@ fi
 #  exit 0
 #fi
 
-function compatibility_check {
+if [ "$2" = "--compatible" ]; then
   echo -n "Checking for compatibility... "
   if [[ "$URL" =~ "youtube.com" ]] || [[ "$URL" =~ "youtu.be" ]] \
   || [[ "$URL" =~ "cinemassacre.com" ]] || [[ "$URL" =~ "channelawesome.com" ]] \
@@ -155,24 +156,31 @@ function compatibility_check {
     echo "Unknown website"
     exit 1
   fi
-}
+fi
 
 # this function will be used by another temp sh file
 cat >"$ERRORFILE" <<EOF
 #!/bin/bash
-function error_handling() { # args: (error code, \$DOWNLOADER, \$CMD, [--terminal])
-  if [ "\$1" != 0 ] && [ "\$1" != 255 ]; then
-    echo
-    echo "ERROR: Something went wrong with \$2"
-    echo "Command attempted: \$3"
-    echo
-    if [ "\$4" != "--terminal" ]; then
-      read -n1 -r -p "Press any key to exit..."
+function error_handling() { # args: (error code, output file, \$DOWNLOADER, \$CMD, filename, [--terminal])
+  if [ "\$1" != "0" ] && [ "\$1" != "255" ]; then
+    if [ "\$(<\$2)" != "no output" ] && ( grep -q 'ERROR: Did not get any data blocks' "\$2" \
+    || ( grep -q '[download]' "\$2" && grep -q 'ERROR: unable to download video data: HTTP Error 404: Not Found' "\$2" )); then
+      rm "\$5.part"
+      echo "File is incomplete on server; trying again at default (usually highest) quality..."
+      return 0
+    else
       echo
+      echo "ERROR: Something went wrong with \$3"
+      echo "Command attempted: \$4"
+      echo
+      if [ "\$6" != "--terminal" ]; then
+        read -n1 -r -p "Press any key to exit..."
+        echo
+      fi
+      return \$1
     fi
-    exit \$1
+  else return 255
   fi
-  rm "$ERRORFILE"
 }
 EOF
 chmod +x "$ERRORFILE"
@@ -256,10 +264,6 @@ elif [ "$ROOSTER_TEETH" = "true" ]; then
   fi
 fi
 
-if [ "$2" = "--compatible" ]
-then compatibility_check # will result in an exit after execution
-fi
-
 # per-site quality params
 if [ $(contains "${LOWBAND[@]}" "$ROUTER") = "y" ]; then
   echo "Trying to download low quality..."
@@ -306,42 +310,43 @@ CMD="env LC_ALL=$LANG $DOWNLOADER $OPT ${EXOPT[@]} -o"
 
 # per-site destination params
 if [[ "$URL" =~ "cc.com" ]] || [[ "$URL" =~ "crunchyroll.com" ]]
-then CMD="$CMD \"${DEST}%(title)s $ID.%(ext)s\" \"$URL\""
+then FILE="$(youtube-dl --get-filename -o "${DEST}%(title)s $ID.%(ext)s" "$URL")"
 elif [[ "$URL" =~ "bbcamerica.com" ]]
-then CMD="$CMD \"${DEST}%(title)s.%(ext)s\" \"$URL\""
+then FILE="$(youtube-dl --get-filename -o "${DEST}%(title)s.%(ext)s" "$URL")"
 elif [[ "$URL" =~ "history.com" ]]
-then CMD="$CMD \"${DEST}$TITLE %(title)s.%(ext)s\" \"$URL\""
+then FILE="$(youtube-dl --get-filename -o "${DEST}$TITLE %(title)s.%(ext)s" "$URL")"
 elif ! [ -f "$VIDEOS/.toggled" ] \
   && ( [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ] ); then
   if [ "$ROOSTER_TEETH" = "true" ]; then
     DEST="$VIDEOS/Rooster Teeth/"
-    CMD="$CMD \"${DEST}$TITLE.%(ext)s\" \"$URL\""
+    FILE="$(youtube-dl --get-filename -o "${DEST}$TITLE.%(ext)s" "$URL")"
   elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
     || [[ "$URL" =~ "cwseed.com" ]]
-  then CMD="$CMD \"${DEST}%(extractor)s/%(title)s $ID.%(ext)s\" \"$URL\""
-  else CMD="$CMD \"${DEST}%(uploader)s/%(title)s $ID.%(ext)s\" \"$URL\""
+  then FILE="$(youtube-dl --get-filename -o "${DEST}%(extractor)s/%(title)s $ID.%(ext)s" "$URL")"
+  else FILE="$(youtube-dl --get-filename -o "${DEST}%(uploader)s/%(title)s $ID.%(ext)s" "$URL")"
   fi
 else
   if [ "$ROOSTER_TEETH" = "true" ]; then
     DEST="$VIDEOS/${FOLDER}Rooster Teeth"
-    CMD="$CMD \"${DEST} - $TITLE.%(ext)s\" \"$URL\""
+    FILE="$(youtube-dl --get-filename -o "${DEST} - $TITLE.%(ext)s" "$URL")"
   elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
     || [[ "$URL" =~ "cwseed.com" ]]; then
     EXTRACTOR="$(youtube-dl --get-filename -o %\(extractor\)s "$URL")"
     DEST="$VIDEOS/$FOLDER$EXTRACTOR"
-    CMD="$CMD \"${DEST} - %(title)s $ID.%(ext)s\" \"$URL\""
+    FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
   else
     UPLOADER="$(youtube-dl --get-filename -o %\(uploader\)s "$URL")"
-    echo $UPLOADER
     DEST="$VIDEOS/$FOLDER$UPLOADER"
-    CMD="$CMD \"${DEST} - %(title)s $ID.%(ext)s\" \"$URL\""
-    echo $CMD
+    FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
   fi
   if [ -f "$VIDEOS/.toggled" ]; then
     mkdir "$DEST" 2>/dev/null || true
-    echo "$(basename $DEST)" >> "$VIDEOS/.toggled"
+    echo "$(basename "$DEST")" >> "$VIDEOS/.toggled"
   fi
 fi
+FILE="$(echo "$FILE" | sed 's/"/\\\"/g')"
+CMD="$CMD \"$FILE\" \"$URL\""
+CMD_NO_QUALITY="$(echo "$CMD" | sed 's/-f "[^"]\+"//')"
 
 if [ "$1" != "--terminal" ]; then
   if [ "$1" = "--compatible" ]
@@ -353,7 +358,7 @@ source "$ERRORFILE"
 while true; do
   read -n 1 -p "Download, browser, player, copy link, or quit? [D/B/P/C/Q] " ANS
   case \$ANS in
-    [dD] ) echo; $CMD; ERROR=\$?; break;;
+    [dD] ) echo; set -o pipefail; $CMD 2>&1 | tee "$OUTPUTFILE"; ERROR=\$?; set +o pipefail; break;;
     [bB] ) nohup $BROWSER "$URL" >/dev/null & sleep 0.5; disown -r & exit; break;;
     [pP] ) nohup $PLAYER "$URL" >/dev/null & sleep 0.5; disown -r & exit; break;;
     [cC] ) echo -n "$URL" | xclip -selection c; sleep 0.5; disown -r & exit; break;;
@@ -361,8 +366,18 @@ while true; do
        * ) echo; echo "invalid option"
   esac
 done
-error_handling \$ERROR "$DOWNLOADER" '$CMD'
-rm "$ASKFILE"
+if error_handling \$ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD" | sed 's/"/\\\"/g')" "$FILE" ; then
+  # return value of 0 means try again with no quality setting
+  set -o pipefail
+  $CMD_NO_QUALITY 2>&1 | tee "$OUTPUTFILE"
+  ERROR=\$?
+  set +o pipefail
+  if error_handling \$ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE"; then
+    echo "...but there's no higher quality to try, so I give up"
+    echo "no output" > "$OUTPUTFILE"
+    error_handling \$ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE"
+  fi
+fi
 EOF
     chmod +x "$ASKFILE"
     CMD="$ASKFILE"
@@ -370,11 +385,31 @@ EOF
   CMD="$TERMINAL --geometry=80x10 --title=youtube-dl -e \"bash -c '$(echo $CMD)'\""
 fi
 
-eval "$CMD" &
+if [ "$1" = "--terminal" ]
+then set -o pipefail
+fi
+eval "$CMD" 2>&1 | tee "$OUTPUTFILE" &
 wait $!
 ERROR=$?
-
-error_handling $ERROR "$DOWNLOADER" "$CMD" --terminal
+if [ "$1" = "--terminal" ]
+then set +o pipefail
+fi
+if error_handling $ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD" | sed 's/"/\\\"/g')" "$FILE" --terminal ; then
+  # return value of 0 means try again with no quality setting
+  set -o pipefail
+  eval "$CMD_NO_QUALITY" 2>&1 | tee "$OUTPUTFILE" &
+  wait $!
+  ERROR=$?
+  set +o pipefail
+  if error_handling $ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE" --terminal; then
+    echo "...but there's no higher quality to try, so I give up"
+    echo "no output" > "$OUTPUTFILE"
+    error_handling $ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE" --terminal
+  fi
+fi
+rm "$ERRORFILE"
+rm "$OUTPUTFILE"
+rm "$ASKFILE" 2>/dev/null
 
 if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]; then
   mv "$DEST$ID.ass" "$(find $DEST -name "*$ID.mp4" | sed -n 1p | sed 's/\.mp4/\.ass/')"

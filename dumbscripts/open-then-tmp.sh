@@ -31,13 +31,13 @@ ARGS=()
 FILES=()
 for i in "$@"; do
   # skip subtitles files
-  if [[ "$i" =~ ".srt" ]] || [[ "$i" =~ ".ass" ]] || [[ "$i" =~ ".ssa" ]] || [[ "$i" =~ ".sub" ]]
+  if [[ "$i" =~ ".srt" ]] || [[ "$i" =~ ".ass" ]] || [[ "$i" =~ ".ssa" ]] || [[ "$i" =~ ".sub" ]] || [[ "$ARG" =~ ".idx" ]]
   then continue
   fi
   ARG="$(cd "$(dirname "$i")"; pwd -P)/$(basename "$i")" # get full path
   ARGS+=( "$ARG " )
   # make temporary file to show watching status
-  FILE="$FOLDER/~watching - $(basename "$i")"
+  FILE="$FOLDER/~watching - $(basename "$i" | sed 's/.part$//')"
   echo "$i" > "$FILE"
   FILES+=( "$FILE" )
 done
@@ -50,5 +50,5 @@ for i in "${FILES[@]}"
 do rm "$i"
 done
 for i in "$@"
-do mv "$i" "$FOLDER/"
+do mv "$(echo "$i" | sed 's/.part$//')" "$FOLDER/"
 done
