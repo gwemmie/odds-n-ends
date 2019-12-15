@@ -111,11 +111,13 @@ else
 fi
 # we will soon lose track of exactly what the roosterteeth.com URL is, so we have to keep track a simpler way when it comes to later options
 ROOSTER_TEETH="false"
-if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
-|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]] \
-|| [[ "$URL" =~ "history.com" ]]
-then DEST="$VIDEOS/Ongoing TV/$FOLDER"
-elif [[ "$URL" =~ "roosterteeth.com" ]]
+# I changed my mind about storing these
+#if [[ "$URL" =~ "crunchyroll.com" ]] || [[ "$URL" =~ "cc.com" ]] \
+#|| [[ "$URL" =~ "cwseed.com" ]] || [[ "$URL" =~ "bbcamerica.com" ]] \
+#|| [[ "$URL" =~ "history.com" ]]
+#then DEST="$VIDEOS/Ongoing TV/$FOLDER"
+#el
+if [[ "$URL" =~ "roosterteeth.com" ]]
 then ROOSTER_TEETH="true"
 else DEST="$VIDEOS/$FOLDER"
 fi
