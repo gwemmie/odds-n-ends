@@ -91,6 +91,7 @@ EXECFILE="/tmp/download-vid"
 ERRORFILE="$EXECFILE-error-$$.sh"
 OUTPUTFILE="$EXECFILE-output-$$"
 ASKFILE="$EXECFILE-ask-$$.sh"
+BATCH="false"
 if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
   if [ "$2" = "--compatible" ]; then
     URL="$3"
@@ -99,7 +100,11 @@ if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
   else
     URL="$2"
     FOLDER="$3"
-    EXOPT="${@:4}"
+    if [ "$4" = "--batch" ]; then
+      BATCH="true"
+      EXOPT="${@:5}"
+    else EXOPT="${@:4}"
+    fi
   fi
 else
   URL="$1"
@@ -311,39 +316,48 @@ fi
 CMD="env LC_ALL=$LANG $DOWNLOADER $OPT ${EXOPT[@]} -o"
 
 # per-site destination params
-if [[ "$URL" =~ "cc.com" ]] || [[ "$URL" =~ "crunchyroll.com" ]]
-then FILE="$(youtube-dl --get-filename -o "${DEST}%(title)s $ID.%(ext)s" "$URL")"
-elif [[ "$URL" =~ "bbcamerica.com" ]]
-then FILE="$(youtube-dl --get-filename -o "${DEST}%(title)s.%(ext)s" "$URL")"
-elif [[ "$URL" =~ "history.com" ]]
-then FILE="$(youtube-dl --get-filename -o "${DEST}$TITLE %(title)s.%(ext)s" "$URL")"
-elif ! [ -f "$VIDEOS/.toggled" ] \
-  && ( [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ] ); then
-  if [ "$ROOSTER_TEETH" = "true" ]; then
-    DEST="$VIDEOS/Rooster Teeth/"
-    FILE="$(youtube-dl --get-filename -o "${DEST}$TITLE.%(ext)s" "$URL")"
-  elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
-    || [[ "$URL" =~ "cwseed.com" ]]
-  then FILE="$(youtube-dl --get-filename -o "${DEST}%(extractor)s/%(title)s $ID.%(ext)s" "$URL")"
-  else FILE="$(youtube-dl --get-filename -o "${DEST}%(uploader)s/%(title)s $ID.%(ext)s" "$URL")"
+if [ "$BATCH" = "true" ]; then
+  if ! ( [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ] )
+  then FILE="${DEST}%(title)s.%(ext)s"
+  else
+    echo "ERROR: batch argument requires manual destination"
+    exit 1
   fi
 else
-  if [ "$ROOSTER_TEETH" = "true" ]; then
-    DEST="$VIDEOS/${FOLDER}Rooster Teeth"
-    FILE="$(youtube-dl --get-filename -o "${DEST} - $TITLE.%(ext)s" "$URL")"
-  elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
-    || [[ "$URL" =~ "cwseed.com" ]]; then
-    EXTRACTOR="$(youtube-dl --get-filename -o %\(extractor\)s "$URL")"
-    DEST="$VIDEOS/$FOLDER$EXTRACTOR"
-    FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
+  if [[ "$URL" =~ "cc.com" ]] || [[ "$URL" =~ "crunchyroll.com" ]]
+  then FILE="$(youtube-dl --get-filename -o "${DEST}%(title)s $ID.%(ext)s" "$URL")"
+  elif [[ "$URL" =~ "bbcamerica.com" ]]
+  then FILE="$(youtube-dl --get-filename -o "${DEST}%(title)s.%(ext)s" "$URL")"
+  elif [[ "$URL" =~ "history.com" ]]
+  then FILE="$(youtube-dl --get-filename -o "${DEST}$TITLE %(title)s.%(ext)s" "$URL")"
+  elif ! [ -f "$VIDEOS/.toggled" ] \
+    && ( [ -z "$FOLDER" ] || [ "$FOLDER" = "./" ] ); then
+    if [ "$ROOSTER_TEETH" = "true" ]; then
+      DEST="$VIDEOS/Rooster Teeth/"
+      FILE="$(youtube-dl --get-filename -o "${DEST}$TITLE.%(ext)s" "$URL")"
+    elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
+      || [[ "$URL" =~ "cwseed.com" ]]
+    then FILE="$(youtube-dl --get-filename -o "${DEST}%(extractor)s/%(title)s $ID.%(ext)s" "$URL")"
+    else FILE="$(youtube-dl --get-filename -o "${DEST}%(uploader)s/%(title)s $ID.%(ext)s" "$URL")"
+    fi
   else
-    UPLOADER="$(youtube-dl --get-filename -o %\(uploader\)s "$URL")"
-    DEST="$VIDEOS/$FOLDER$UPLOADER"
-    FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
-  fi
-  if [ -f "$VIDEOS/.toggled" ]; then
-    mkdir "$DEST" 2>/dev/null || true
-    echo "$(basename "$DEST")" >> "$VIDEOS/.toggled"
+    if [ "$ROOSTER_TEETH" = "true" ]; then
+      DEST="$VIDEOS/${FOLDER}Rooster Teeth"
+      FILE="$(youtube-dl --get-filename -o "${DEST} - $TITLE.%(ext)s" "$URL")"
+    elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
+      || [[ "$URL" =~ "cwseed.com" ]]; then
+      EXTRACTOR="$(youtube-dl --get-filename -o %\(extractor\)s "$URL")"
+      DEST="$VIDEOS/$FOLDER$EXTRACTOR"
+      FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
+    else
+      UPLOADER="$(youtube-dl --get-filename -o %\(uploader\)s "$URL")"
+      DEST="$VIDEOS/$FOLDER$UPLOADER"
+      FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
+    fi
+    if [ -f "$VIDEOS/.toggled" ]; then
+      mkdir "$DEST" 2>/dev/null || true
+      echo "$(basename "$DEST")" >> "$VIDEOS/.toggled"
+    fi
   fi
 fi
 FILE="$(echo "$FILE" | sed 's/"/\\\"/g')"
