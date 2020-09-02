@@ -45,11 +45,11 @@ CHECKCMD="curl -su $USERNAME:$PASSWORD \"https://mail.google.com/mail/feed/atom\
 # (at least not clearly)
 # it goes "<menu item string>! <menu item command>|<subsequent>|<menu>|<items>..."
 # at least their docs say how to change the ! and | to different characters if you prefer
-DEFAULTMENU="Check for messages...! $0 recheck"
+LOADEDMENU="Check for messages...! $0 recheck"
 if [ "$RSS" != "false" ]
-then DEFAULTMENU+="|Check for messages & RSS (slower)...! $0 recheck-all"
+then LOADEDMENU+="|Check for messages & RSS (slower)...! $0 recheck-all"
 fi
-DEFAULTMENU+="|Run ${MAILPROG}! $0 launch"
+DEFAULTMENU="|Run ${MAILPROG}! $0 launch"
 if [[ "$MAILPROG" =~ "thunderbird" ]]; then
   DEFAULTMENU+="|Open address book! ${MAILPROG} -addressbook"
   DEFAULTMENU+="|Compose message! ${MAILPROG} -compose"
@@ -141,7 +141,7 @@ function send-command() {
 function set-read {
   send-command "icon:$ICON"
   send-command "tooltip:$USERNAME@$DOMAIN - no new messages"
-  MENU="$DEFAULTMENU"
+  MENU="$LOADEDMENU|$DEFAULTMENU"
   if [ "$RSS" != "false" ]
   then MENU+="|$RSSMENU"
   fi
@@ -150,7 +150,7 @@ function set-read {
 function set-unread() {
   send-command "icon:$UNREADICON"
   send-command "tooltip:$USERNAME@$DOMAIN - $1 new messages"
-  MENU="$DEFAULTMENU"
+  MENU="$LOADEDMENU|$DEFAULTMENU"
   if [ "$RSS" != "false" ]
   then MENU+="|$RSSMENU"
   fi
@@ -178,7 +178,7 @@ function start {
   mkfifo "$PIPEFILE"
   tail -f "$PIPEFILE" | yad --notification --text="$USERNAME@$DOMAIN" --command="$0 launch" --image="$ICON" --listen 2>/dev/null &
   YADPID=$!
-  send-command "menu:Starting up..."
+  send-command "menu:Starting up...|$DEFAULTMENU"
 }
 function reset { # AKA mark current messages as read until next check
   stop

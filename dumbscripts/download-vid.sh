@@ -33,6 +33,7 @@
 # (https://github.com/nirbheek/youtube-ass) to get a .ass subtitle of
 # the annotations and, if there are any annotations, saves the file
 # with the same name as the video (otherwise deletes the file).
+# This feature is now defunct as YouTube's annotations feature is gone.
 
 # Bonus feature: type "dailyshow" as the URL argument to automatically
 # get the newest episode of the Daily Show with Trevor Noah. I wish I
@@ -90,8 +91,10 @@ VIDEOS="$HOME/Downloads"
 EXECFILE="/tmp/download-vid"
 ERRORFILE="$EXECFILE-error-$$.sh"
 OUTPUTFILE="$EXECFILE-output-$$"
+FAILFILE="$EXECFILE-fail-$$"
 ASKFILE="$EXECFILE-ask-$$.sh"
 BATCH="false"
+ERROR=0
 if [ "$1" = "--terminal" ] || [ "$1" = "--compatible" ]; then
   if [ "$2" = "--compatible" ]; then
     URL="$3"
@@ -170,7 +173,7 @@ cat >"$ERRORFILE" <<EOF
 #!/bin/bash
 function error_handling() { # args: (error code, output file, \$DOWNLOADER, \$CMD, filename, [--terminal])
   if [ "\$1" != "0" ] && [ "\$1" != "255" ]; then
-    if [ "\$(<\$2)" != "no output" ] && ( grep -q 'ERROR: Did not get any data blocks' "\$2" \
+    if [ "\$(<\$2)" != "no-output" ] && ( grep -q 'ERROR: Did not get any data blocks' "\$2" \
     || ( grep -q '[download]' "\$2" && grep -q 'ERROR: unable to download video data: HTTP Error 404: Not Found' "\$2" )); then
       rm "\$5.part"
       echo "File is incomplete on server; trying again at default (usually highest) quality..."
@@ -178,9 +181,10 @@ function error_handling() { # args: (error code, output file, \$DOWNLOADER, \$CM
     else
       echo
       echo "ERROR: Something went wrong with \$3"
-      echo "Command attempted: \$4"
+      echo "Command attempted: " \$4
       echo
       if [ "\$6" != "--terminal" ]; then
+        echo "\$4" > "$FAILFILE"
         read -n1 -r -p "Press any key to exit..."
         echo
       fi
@@ -211,7 +215,7 @@ function contains() {
 if [[ "$URL" =~ "youtube.com" ]]; then
   OPT="--cookies $HOME/.dumbscripts/download-vid-cookies.txt"
   ID="$(echo $URL | cut -f 2 -d "=")"
-  $HOME/.local/share/git/youtube-ass/youtube-ass.py "$ID"
+  #$HOME/.local/share/git/youtube-ass/youtube-ass.py "$ID"
   # check for empty annotations file
   # It's referred to with that wildcard in the beginning because once,
   # I somehow ended up with a file that had a hyphen in front of it (so
@@ -221,14 +225,14 @@ if [[ "$URL" =~ "youtube.com" ]]; then
   # what. I had to do that because I've had to deal with files named
   # "--$ID.ass", which were interpreted as arguments. Why not just put
   # it in quotes? Because that made the wildcard stop being a wildcard.
-  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ass 2>/dev/null | sed -n 3p)" ]
-  then rm -- *$ID.ass
-  else mv -- *$ID.ass "$DEST$ID.ass"
-  fi
-  if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ssa 2>/dev/null | sed -n 3p)" ]
-  then rm -- *$ID.ssa
-  else mv -- *$ID.ssa "$DEST$ID.ssa"
-  fi
+  #if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ass 2>/dev/null | sed -n 3p)" ]
+  #then rm -- *$ID.ass
+  #else mv -- *$ID.ass "$DEST$ID.ass"
+  #fi
+  #if [ -z "$(grep -A2 '\[Events\]' -- *$ID.ssa 2>/dev/null | sed -n 3p)" ]
+  #then rm -- *$ID.ssa
+  #else mv -- *$ID.ssa "$DEST$ID.ssa"
+  #fi
 elif [[ "$URL" =~ "crunchyroll.com" ]]; then
   OPT="--write-sub --sub-lang enUS --recode-video mkv --postprocessor-args \"-c copy\" --embed-subs"
   URL="$(curl -LIs -o /dev/null -w '%{url_effective}' "$URL")"
@@ -269,6 +273,12 @@ elif [ "$ROOSTER_TEETH" = "true" ]; then
     echo "\$API_URL=$API_URL" >> "${DEST}$TITLE"
     exit 1
   fi
+fi
+
+# check for bad SSL cert
+OUTPUT="$(youtube-dl -F "$URL")"
+if [[ "$OUTPUT" =~ "SSL: CERTIFICATE_VERIFY_FAILED" ]]
+then OPT="--no-check-certificate $OPT"
 fi
 
 # per-site quality params
@@ -347,10 +357,26 @@ else
     elif [[ "$URL" =~ "vessel.com" ]] || [[ "$URL" =~ "ted.com" ]] \
       || [[ "$URL" =~ "cwseed.com" ]]; then
       EXTRACTOR="$(youtube-dl --get-filename -o %\(extractor\)s "$URL")"
+      if [ -z "$EXTRACTOR" ]; then
+        if [ "$1" != "--terminal" ]; then
+          echo "$URL" > "$FAILFILE"
+          notify-send -u critical -t 300000 "$0 failed to load $URL"
+        fi
+        rm "$ERRORFILE"
+        exit 1
+      fi
       DEST="$VIDEOS/$FOLDER$EXTRACTOR"
       FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
     else
       UPLOADER="$(youtube-dl --get-filename -o %\(uploader\)s "$URL")"
+      if [ -z "$UPLOADER" ]; then
+        if [ "$1" != "--terminal" ]; then
+          echo "$URL" > "$FAILFILE"
+          notify-send -u critical -t 300000 "$0 failed to load $URL"
+        fi
+        rm "$ERRORFILE"
+        exit 1
+      fi
       DEST="$VIDEOS/$FOLDER$UPLOADER"
       FILE="$(youtube-dl --get-filename -o "${DEST} - %(title)s $ID.%(ext)s" "$URL")"
     fi
@@ -359,6 +385,14 @@ else
       echo "$(basename "$DEST")" >> "$VIDEOS/.toggled"
     fi
   fi
+fi
+if [ -z "$FILE" ]; then
+  if [ "$1" != "--terminal" ]; then
+    echo "$URL" > "$FAILFILE"
+    notify-send -u critical -t 300000 "$0 failed to load $URL"
+  fi
+  rm "$ERRORFILE"
+  exit 1
 fi
 FILE="$(echo "$FILE" | sed 's/"/\\\"/g')"
 CMD="$CMD \"$FILE\" \"$URL\""
@@ -390,7 +424,7 @@ if error_handling \$ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD" | sed 's/"/
   set +o pipefail
   if error_handling \$ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE"; then
     echo "...but there's no higher quality to try, so I give up"
-    echo "no output" > "$OUTPUTFILE"
+    echo "no-output" > "$OUTPUTFILE"
     error_handling \$ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE"
   fi
 fi
@@ -419,7 +453,7 @@ if error_handling $ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD" | sed 's/"/\
   set +o pipefail
   if error_handling $ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE" --terminal; then
     echo "...but there's no higher quality to try, so I give up"
-    echo "no output" > "$OUTPUTFILE"
+    echo "no-output" > "$OUTPUTFILE"
     error_handling $ERROR "$OUTPUTFILE" "$DOWNLOADER" "$(echo "$CMD_NO_QUALITY" | sed 's/"/\\\"/g')" "$FILE" --terminal
   fi
 fi
@@ -427,6 +461,7 @@ rm "$ERRORFILE"
 rm "$OUTPUTFILE"
 rm "$ASKFILE" 2>/dev/null
 
+# final steps such as renaming files
 if [[ "$URL" =~ "youtube.com" ]] && [ -f "$DEST$ID.ass" ]; then
   mv "$DEST$ID.ass" "$(find $DEST -name "*$ID.mp4" | sed -n 1p | sed 's/\.mp4/\.ass/')"
 elif [[ "$URL" =~ "bbc.co.uk" ]]; then
@@ -437,4 +472,4 @@ fi
 # my own script to automate some folder management with downloaded videos
 $HOME/.dumbscripts/update-downloads.sh >/dev/null 2>&1 & disown
 
-disown -r && exit
+disown -r && exit $ERROR

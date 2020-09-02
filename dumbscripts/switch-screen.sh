@@ -1,6 +1,7 @@
 #!/bin/bash
 # Swaps the current window between 2 monitors that are on the same "screen" without you having to drag it and perfectly align it
-SCREENWIDTH=1920 # left monitor's X resolution
+SCREENWIDTH=1920 # primary monitor's X resolution
+PANELWIDTH=120 # XFCE panel width
 # xdotool moves certain windows by slightly too much for some reason???
 ERRORX=0
 ERRORY=0
@@ -25,8 +26,8 @@ then ERRORY=56
 #then ERRORY=14
 fi
 if [ $WINDOWX -ge $SCREENWIDTH ]
-then POS=$(expr $WINDOWX - 1920 + 120) # 120 is my XFCE panel width
-else POS=$(expr $WINDOWX + 1920 - 120)
+then POS=$(expr $WINDOWX - $SCREENWIDTH + $PANELWIDTH)
+else POS=$(expr $WINDOWX + $SCREENWIDTH - $PANELWIDTH)
 fi
 xdt windowmove $WINDOW $(expr $POS - $ERRORX) $(expr $WINDOWY - $ERRORY)
 # window might be maximized (if it didn't move, that's our proof):
