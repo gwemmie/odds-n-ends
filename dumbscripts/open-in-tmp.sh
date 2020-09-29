@@ -33,7 +33,7 @@ done
 ARGS=()
 for i in "$@"; do
   # skip subtitles files
-  if [[ "$ARG" =~ ".srt" ]] || [[ "$ARG" =~ ".ass" ]] || [[ "$ARG" =~ ".ssa" ]] || [[ "$ARG" =~ ".sub" ]] || [[ "$ARG" =~ ".idx" ]]
+  if [[ "$ARG" =~ ".srt" ]] || [[ "$ARG" =~ ".ass" ]] || [[ "$ARG" =~ ".ssa" ]] || [[ "$ARG" =~ ".sub" ]] || [[ "$ARG" =~ ".idx" ]] || [[ "$ARG" =~ ".vtt" ]]
   then continue
   fi
   ARG="$FOLDER/$(basename "$i")" # get post-mv path

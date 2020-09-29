@@ -277,8 +277,12 @@ fi
 
 # check for bad SSL cert
 OUTPUT="$(youtube-dl -F "$URL")"
-if [[ "$OUTPUT" =~ "SSL: CERTIFICATE_VERIFY_FAILED" ]]
-then OPT="--no-check-certificate $OPT"
+if [[ "$OUTPUT" =~ "SSL: CERTIFICATE_VERIFY_FAILED" ]]; then
+  if [ "$1" != "--terminal" ]
+  then notify-send -u critical "$URL: bad SSL; continuing anyway"
+  else echo "WARNING: SSL: CERTIFICATE_VERIFY_FAILED: continuing anyway..."
+  fi
+  OPT="--no-check-certificate $OPT"
 fi
 
 # per-site quality params

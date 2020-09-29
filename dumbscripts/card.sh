@@ -1,5 +1,5 @@
 #!/bin/bash
-# Swap an NVidia video card's bound driver between the host nvidia
+# Swap a video card's bound driver between the host
 # driver and a QEMU/KVM virtual machine's vfio-pci driver for passthru
 set -e
 

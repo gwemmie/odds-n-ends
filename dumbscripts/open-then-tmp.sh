@@ -31,7 +31,7 @@ ARGS=()
 FILES=()
 for i in "$@"; do
   # skip subtitles files
-  if [[ "$i" =~ ".srt" ]] || [[ "$i" =~ ".ass" ]] || [[ "$i" =~ ".ssa" ]] || [[ "$i" =~ ".sub" ]] || [[ "$ARG" =~ ".idx" ]]
+  if [[ "$i" =~ ".srt" ]] || [[ "$i" =~ ".ass" ]] || [[ "$i" =~ ".ssa" ]] || [[ "$i" =~ ".sub" ]] || [[ "$i" =~ ".idx" ]] || [[ "$i" =~ ".vtt" ]]
   then continue
   fi
   ARG="$(cd "$(dirname "$i")"; pwd -P)/$(basename "$i")" # get full path
