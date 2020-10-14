@@ -33,7 +33,7 @@ IGNORES=( currentsteam localonly tempfiles ) # ~/.unison/ scripts with ignores t
 CLOUDONLY="$HOME/.unison/cloudonly"
 
 # set unison profiles to match current device IPs
-# deprecated and currently causes currentsteam to be empty unless I move the currentsteam block above this code block in this file (super weird, I know)
+# deprecated and, if uncommented, currently causes currentsteam to be empty unless I move the currentsteam block above this code block in this file (super weird, I know)
 #SAVEIFS=$IFS
 #IFS=$(echo -en "\n\b")
 #for i in $(ls $INFO)
